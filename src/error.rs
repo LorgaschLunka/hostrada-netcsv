@@ -21,6 +21,21 @@ pub enum HostradaError {
     #[error(transparent)]
     StdIo(#[from] std::io::Error),
 
+    #[error("Unable to find variable {var} in the netcdf file")]
+    VarNotFound {
+        var: String,
+    },
+
+    #[error("Unable to find attribute {attr} in the netcdf file")]
+    AttrNotFound {
+        attr: String,
+    },
+
+    #[error("Error parsing{context}: {e}")]
+    ParseError {
+        context: String,
+        e: chrono::ParseError,
+    }
 }
 
 #[derive(Debug, thiserror::Error)]

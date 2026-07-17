@@ -1,9 +1,12 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::HashMap,
+    sync::Arc,
+    time::Instant
+};
 use chrono::{DateTime, Utc};
 use rayon::prelude::*;
 use log::{debug, warn};
 use num_traits::{Float, FromPrimitive};
-use std::time::Instant;
 use netcdf::AttributeValue;
 
 use crate::{
@@ -33,9 +36,9 @@ impl HostradaDataset {
         let file_path = file_path.as_ref();
         let file = netcdf::open(file_path)?;
         
-        let grid = calculate_grid(&file); 
+        let grid = calculate_grid(&file)?; 
 
-        let time_map = calculate_time_map(&file);
+        let time_map = calculate_time_map(&file)?;
 
         Ok(Self { file, grid, time_map })
     }
@@ -61,14 +64,14 @@ impl HostradaDataset {
         let first_file = netcdf::open(files.first().unwrap())?;
 
         // calculate grid and time map with first file
-        let grid = calculate_grid(&first_file);
+        let grid = calculate_grid(&first_file)?;
 
         // return HostradaDatasets
         files
             .iter()
             .map(|file| {
                 let opened_file = netcdf::open(file)?;
-                let time_map = calculate_time_map(&opened_file);
+                let time_map = calculate_time_map(&opened_file)?;
                 Ok(HostradaDataset {
                     file: opened_file,
                     grid: grid.clone(),
@@ -133,11 +136,11 @@ impl HostradaDataset {
     }
 
     /// Check if given pixel x and y are inside the hostrada grid.
-    pub fn contains_pixel(&self, x: usize, y: usize) -> bool {
-        if (0..=self.max_x()).contains(&x) && (0..=self.max_y()).contains(&y) {
-            return true
+    pub fn contains_pixel(&self, x: usize, y: usize) -> Result<bool, HostradaError> {
+        if (0..=self.max_x()?).contains(&x) && (0..=self.max_y()?).contains(&y) {
+            return Ok(true);
         }
-        false
+        Ok(false)
     }
 
     /// Calculate the nearest pixel of given coordinates.
@@ -259,8 +262,7 @@ impl HostradaDataset {
         let val = var.get_value::<f32, _>((time_index, y, x)).ok()?;
 
         // check for scale factor
-        let val = self.apply_scale_factor(val, var_name);
-        Some(val)
+        self.apply_scale_factor(val, var_name)
     }
 
     pub fn scale_factor(&self, var_name: &str) -> Option<f64> {
@@ -282,13 +284,12 @@ impl HostradaDataset {
         None
     }
 
-    pub fn apply_scale_factor<T>(&self, val: T, var_name: &str) -> T
+    pub fn apply_scale_factor<T>(&self, val: T, var_name: &str) -> Option<T>
     where 
         T: Float + FromPrimitive,
     {
         if let Some(attr) = self.file()
-            .variable(var_name)
-            .unwrap()
+            .variable(var_name)?
             .attribute("scale_factor")
         {
             if let Ok(attr_value) = attr.value() {
@@ -300,36 +301,56 @@ impl HostradaDataset {
                 };
         
                 if let Some(scale_factor) = scale_factor {
-                    return val * scale_factor;
+                    return Some(val * scale_factor);
                 }
             }
         }
         
-        val
+        Some(val)
     }
 
     /// Returns the maximum value that x can be. This will always be 719, as this is the logic of the hostrada data; however, this method reduces hard coded values.
-    pub fn max_x(&self) -> usize {
-        self.file().variable("X").unwrap().len() - 1 // - 1 because it starts at 0
-    }
-    /// Returns the maximum value that y can be. This will always be 937, as this is the logic of the hostrada data; however, this method reduces hard coded values.
-    pub fn max_y(&self) -> usize {
-        self.file().variable("Y").unwrap().len() - 1 // - 1 because it starts at 0
+    /// ## Errors
+    /// - fails if the x variable cannot be found in the netcdf file
+    pub fn max_x(&self) -> Result<usize, HostradaError> {
+        let len  = self
+            .file()
+            .variable("X")
+            .ok_or(HostradaError::VarNotFound { var: "X".to_string() })?
+            .len();
+        Ok(len - 1) // - 1 because it starts at 0)
     }
 
-    pub fn origin(&self) -> Option<String> {
-        let attr_val = self.file().variable("time")?.attribute("units")?.value().ok()?;
+    /// Returns the maximum value that y can be. This will always be 937, as this is the logic of the hostrada data; however, this method reduces hard coded values.
+    /// ## Errors
+    /// - fails if the y variable cannot be found in the netcdf file
+    pub fn max_y(&self) -> Result<usize, HostradaError> {
+        let len  = self
+            .file()
+            .variable("Y")
+            .ok_or(HostradaError::VarNotFound { var: "Y".to_string() })?
+            .len();
+        Ok(len - 1) // - 1 because it starts at 0)
+    }
+
+    pub fn origin(&self) -> Result<String, HostradaError> {
+        let attr_val = self
+            .file()
+            .variable("time").ok_or(HostradaError::VarNotFound { var: "time".to_string() })?
+            .attribute("units").ok_or(HostradaError::AttrNotFound { attr: "units".to_string() })?
+            .value()?;
 
         if let AttributeValue::Str(value) = attr_val {
-            return Some(value.split_whitespace().last()?.to_owned());
+            return Ok(value.split_whitespace().last().unwrap().to_owned());
         }
-        None
+        
+        Err(HostradaError::AttrNotFound { attr: "ANY ATTRIBUTE TYPE".to_string() })
 
     }
 }
 
 /// Calculates a hashmap mapping a chrono::Datetime<Utc> to the respective timestamp in the dataset
-fn calculate_time_map(file: &netcdf::File) -> HashMap<DateTime<Utc>, f64> {
+fn calculate_time_map(file: &netcdf::File) -> Result<HashMap<DateTime<Utc>, f64>, HostradaError> {
     let config: Config = match Config::load() {
         Ok(conf) => conf,
         Err(e) => {
@@ -339,9 +360,8 @@ fn calculate_time_map(file: &netcdf::File) -> HashMap<DateTime<Utc>, f64> {
     };
     let time_vals = file
         .variable("time")
-        .expect("Dataset has no time variable!")
-        .get::<f64,_>(..)
-        .unwrap();
+        .ok_or(HostradaError::VarNotFound { var: "time".to_string() })?
+        .get::<f64,_>(..)?;
 
     let parsed= time_vals
         .into_iter()
@@ -351,29 +371,24 @@ fn calculate_time_map(file: &netcdf::File) -> HashMap<DateTime<Utc>, f64> {
     })
     .collect::<Result<HashMap<_, _>, _>>();
 
-    if let Err(e) = parsed {
-        eprintln!("Parse error {e}");
-        std::process::exit(1);
-    } 
-    return parsed.unwrap()
+    return parsed.map_err(|e| HostradaError::ParseError { context: " all the values for the time grid".to_string(), e })
 }
 
 
 /// Calculates a hashmap mapping all coordinates to all HostradaGridPixels of the Hostrada Grid.
-fn calculate_grid(file: &netcdf::File) -> HashMap<(u16, u16), HostradaGridPixel> {
+fn calculate_grid(file: &netcdf::File) -> Result<HashMap<(u16, u16), HostradaGridPixel>, HostradaError> {
 
     let start = Instant::now();
     let lat_vals = file
         .variable("lat")
-        .expect("Variable lat seems to be missing. Maybe the supplied file is corrupt? Was a hostrada netcdf file supplied?")
-        .get::<f64, _>(..) // 4 decimal places so should be precise to ~11m
-        .expect("Something went wrong while getting all lat values");
+        .ok_or(HostradaError::VarNotFound { var: "lat".to_string() })?
+        .get::<f64, _>(..)?; // 4 decimal places so should be precise to ~11m
 
     let lon_vals = file
         .variable("lon")
-        .expect("Variable lon seems to be missing. Maybe the supplied file is corrupt? Was a hostrada netcdf file supplied?")
-        .get::<f64, _>(..) // 4 decimal places so should be precise to ~11m
-        .expect("Something went wrong while getting all lon values");
+        .ok_or(HostradaError::VarNotFound { var:"lon".to_string() })?
+        .get::<f64, _>(..)?; // 4 decimal places so should be precise to ~11m
+        
     
     debug!("Reading all lat and lon vals for grid took {:?}", start.elapsed());
 
@@ -410,5 +425,5 @@ fn calculate_grid(file: &netcdf::File) -> HashMap<(u16, u16), HostradaGridPixel>
 
     debug!("Calculating hashmap of all pixels took {:?}", start.elapsed());
     
-    grid
+    Ok(grid)
 }

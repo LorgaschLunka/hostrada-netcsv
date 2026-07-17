@@ -9,7 +9,10 @@ use chrono::Duration;
 use rayon::prelude::*;
 
 use crate::{
-    cli::HostradaVar, error::HostradaError, hostrada_dataset::HostradaDataset, misc::green_spinner,
+    cli::HostradaVar,
+    error::HostradaError,
+    hostrada_dataset::HostradaDataset,
+    misc::green_spinner,
 };
 
 /// Converts all values of a file into csv format, in order time, y, x (this means that first, all x values for the first timestamp for the first y are displayed and so on).
