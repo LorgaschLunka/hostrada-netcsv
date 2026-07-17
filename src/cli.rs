@@ -116,6 +116,23 @@ impl HostradaVar {
         }
     }
 
+    /// Returns the HostradaVar enum from the abbreviation (e.g. "tas" => HostradaVar::AirTemperatureMean)
+    pub fn from_abbr(abbr: &str) -> Option<Self> {
+        match abbr{
+            "tas" => Some(HostradaVar::AirTemperatureMean),
+            "clt" => Some(HostradaVar::CloudCover),
+            "tdew" => Some(HostradaVar::DewPoint),
+            "mixr" => Some(HostradaVar::HumidityMixingRation),
+            "hurs" => Some(HostradaVar::HumidityRelative),
+            "psl" => Some(HostradaVar::PressureSealevel),
+            "ps" => Some(HostradaVar::PressureSurface),
+            "rsds" => Some(HostradaVar::RadiationDownwelling),
+            "uhi" => Some(HostradaVar::UrbanHeatIslandIntensity),
+            "sfcWind_direction" => Some(HostradaVar::WindDirection),
+            "sfcWind" => Some(HostradaVar::WindSpeed),
+            _ => None,
+        }   
+    }
     /// Returns the link of the variable. This link looks like this: https://opendata.dwd.de/climate_environment/CDC/grids_germany/hourly/hostrada/VAR_NAME/ where 
     /// VAR_NAME is something like 'air_temperature_mean'
     /// # Errors

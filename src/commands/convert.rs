@@ -33,6 +33,7 @@ pub fn run(args: ConvertArgs) {
 
         } else {
             // Get all values of a defined pixel of all files in a directory
+            validate_files(&dir_path).unwrap();
             let paths = std::fs::read_dir(dir_path.clone()).unwrap_or_else(|err| {
                 eprintln!("Failed to read directory {:?}: {err}", dir_path);
                 std::process::exit(1);

@@ -1,12 +1,15 @@
-use std::{fs, io::{self, BufWriter, Write}, path, time::Instant};
+use std::{fs,
+    io::{self, BufWriter, Write},
+    path,
+    time::Instant,
+};
 use log::{warn};
 use indicatif::{ProgressBar, ProgressStyle};
 use chrono::Duration;
+use rayon::prelude::*;
 
 use crate::{
-    hostrada_dataset::HostradaDataset,
-    error::HostradaError,
-    misc::green_spinner,
+    cli::HostradaVar, error::HostradaError, hostrada_dataset::HostradaDataset, misc::green_spinner,
 };
 
 /// Converts all values of a file into csv format, in order time, y, x (this means that first, all x values for the first timestamp for the first y are displayed and so on).
@@ -170,4 +173,52 @@ fn setup(files: Vec<path::PathBuf>, x_y: Option<(usize, usize)>, output_dir: Opt
     Ok((datasets, None, var_id))
 
 
+}
+
+pub fn validate_files(dir: &path::PathBuf) -> anyhow::Result<()> {
+    
+    
+    let files: Vec<fs::DirEntry> = fs::read_dir(dir)?
+        .collect::<Result<_, _>>()?;
+    
+    let client = reqwest::blocking::Client::new();
+    let res = files
+        .into_par_iter()
+        .map(|entry| compare_file_size(&entry, &client)
+            .map(|result| (entry, result))
+        )
+        .collect::<Result<Vec<_>, _>>()?;
+    
+    for tup in &res {
+        if !tup.1 {
+            warn!("Size of file {:?} does not match with server sided filesize! Please try redownload", tup.0.file_name());
+        }
+    }
+
+    if res.iter().map(|tup| tup.1).collect::<Vec<bool>>().contains(&false) {
+        std::process::exit(1);
+    }
+    Ok(())
+}
+
+/// Compares the filesize of a given DirEntry with the filesize on the dwd hostrada server of the respective file
+fn compare_file_size(entry: &fs::DirEntry, client: &reqwest::blocking::Client) -> anyhow::Result<bool> {
+    let file_name = entry.file_name();
+    let file_name = file_name.to_str().unwrap();
+
+    let var = file_name.split_once("_").unwrap().0;
+    let var = HostradaVar::from_abbr(var).unwrap();
+
+    let mut link = var.link()?;
+    link.push_str(file_name);
+
+    let response = client
+        .get(&link)
+        .send()?
+        .error_for_status()?;
+
+    let exp_content_length = response.content_length().unwrap();
+
+    let rl_content_length = entry.metadata()?.len();
+    Ok(exp_content_length == rl_content_length)
 }
