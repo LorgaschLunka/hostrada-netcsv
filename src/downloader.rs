@@ -8,7 +8,7 @@ use crate::{
 };
 
 /// Handles the download of exaktly one file identified by variable and date, using the supplied client
-pub fn download_file(variable: &HostradaVar, date: YearMonth, install_dir: &path::PathBuf, client: &reqwest::blocking::Client) -> Result<(), DownloadError> {
+pub fn download_file(variable: &HostradaVar, date: YearMonth, install_dir: &path::PathBuf, client: &reqwest::blocking::Client) -> anyhow::Result<()> {
     let spinner = green_spinner();
 
     let mut download_link = variable.link()?;

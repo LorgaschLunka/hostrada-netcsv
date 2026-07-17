@@ -162,6 +162,25 @@ impl HostradaVar {
     }
 }
 
+impl std::fmt::Display for HostradaVar {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let current_variant = match self {
+            HostradaVar::AirTemperatureMean => "air_temperature_mean",
+            HostradaVar::CloudCover => "cloud_cover",
+            HostradaVar::DewPoint => "dew_point",
+            HostradaVar::HumidityMixingRation => "humidity_mixing_ratio",
+            HostradaVar::HumidityRelative => "humidity_relative",
+            HostradaVar::PressureSealevel => "pressure_sealevel",
+            HostradaVar::PressureSurface => "pressure_surface",
+            HostradaVar::RadiationDownwelling => "radiation_downwelling",
+            HostradaVar::UrbanHeatIslandIntensity => "urban_heat_island_intensity",
+            HostradaVar::WindDirection => "wind_direction",
+            HostradaVar::WindSpeed => "wind_speed",
+        };
+        write!(f, "{current_variant}")
+    }
+}
+
 #[derive(Args, Debug)]
 pub struct OriginArgs {
     /// File to read in and get origin from (= timestamp used as a base to depict time (days-since) in hostrada netcdf files)
