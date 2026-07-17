@@ -1,0 +1,5 @@
+# days since origin is the time unit of hostrada data. As of now, the origin in hostrada netcdf files is 1949-12-01
+# check with hostrada-netcsv origin
+origin = "1949-12-01T00:00:00+00:00"
+# the base link for the hourly data
+base_link = "https://opendata.dwd.de/climate_environment/CDC/grids_germany/hourly/hostrada/"
