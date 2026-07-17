@@ -49,9 +49,11 @@ impl Config {
             .join(DEFAULT_CONFIG_DIR_NAME)
             .join("config.toml");
 
-        let toml_content = fs::read_to_string(file_path)?;
+        let toml_content = fs::read_to_string(&file_path)?;
         
-        let config: Self = toml::from_str(&toml_content)?;
+        let config: Self = toml::from_str(&toml_content).map_err(|e| {
+            ConfigError::TomlErr { source: e, path: file_path}
+        })?;
 
         Ok(config)
     }

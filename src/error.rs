@@ -55,6 +55,9 @@ pub enum ConfigError {
     #[error(transparent)]
     IOErr(#[from] std::io::Error),
 
-    #[error(transparent)]
-    TomlErr(#[from] toml::de::Error),
+    #[error("toml error with {path}: {source}")]
+    TomlErr {
+        source: toml::de::Error,
+        path: std::path::PathBuf,
+    },
 }
