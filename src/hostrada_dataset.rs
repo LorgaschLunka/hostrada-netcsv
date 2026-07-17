@@ -329,8 +329,13 @@ impl HostradaDataset {
 
 /// Calculates a hashmap mapping a chrono::Datetime<Utc> to the respective timestamp in the dataset
 fn calculate_time_map(file: &netcdf::File) -> HashMap<DateTime<Utc>, f64> {
-    let config: Config = Config::load("config.toml");
-
+    let config: Config = match Config::load() {
+        Ok(conf) => conf,
+        Err(e) => {
+            eprintln!("Couldn't build internal time hashmap due to config_err: {e}");
+            std::process::exit(1);
+        },
+    };
     let time_vals = file
         .variable("time")
         .expect("Dataset has no time variable!")

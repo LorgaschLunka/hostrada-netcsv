@@ -42,4 +42,19 @@ pub enum DownloadError {
 
     #[error(transparent)]
     ReaderWriterErr(#[from] std::io::Error),
+
+    #[error(transparent)]
+    ConfigError(#[from] ConfigError),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ConfigError {
+    #[error("Could not determine user config directory")]
+    DirNotFound,
+
+    #[error(transparent)]
+    IOErr(#[from] std::io::Error),
+
+    #[error(transparent)]
+    TomlErr(#[from] toml::de::Error),
 }

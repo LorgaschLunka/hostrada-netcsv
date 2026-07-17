@@ -12,15 +12,22 @@ mod dates_and_times;
 
 use env_logger::Env;
 use clap::Parser;
+use owo_colors::OwoColorize;
 
 use crate::{
     cli::{Cli, Commands},
-    commands::{convert, download, pixel, origin},
+    commands::{convert, download, origin, pixel},
+    config::Config,
 };
 
 
 fn main() {
     env_logger::Builder::from_env(Env::default().default_filter_or("debug")).init();
+
+    if let Err(e) = Config::create_dir() {
+        eprintln!("{} {e}", "Error creating config:\n╰─▶".red().bold());
+        std::process::exit(1);
+    }
 
     let cli = Cli::parse();
 

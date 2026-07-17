@@ -11,7 +11,7 @@ use crate::{
 pub fn download_file(variable: &HostradaVar, date: YearMonth, install_dir: &path::PathBuf, client: &reqwest::blocking::Client) -> Result<(), DownloadError> {
     let spinner = green_spinner();
 
-    let mut download_link = variable.link();
+    let mut download_link = variable.link()?;
     let filename = format!("{}_1hr_HOSTRADA-v1-0_BE_gn_{}{:02}0100-{}{:02}{:02}23.nc", variable.abbr(), date.year, date.month, date.year, date.month, date.days_in_month());
     
     download_link.push_str(&filename);
