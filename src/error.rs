@@ -60,4 +60,11 @@ pub enum ConfigError {
         source: toml::de::Error,
         path: std::path::PathBuf,
     },
+
+    #[error("invalid config: value {val} for {var} {msg}")]
+    InvalidConfig {
+        val: String,
+        var: String,
+        msg: String,
+    }
 }

@@ -8,7 +8,8 @@ use netcdf::AttributeValue;
 use chrono::{
     DateTime,
     Utc,
-    Duration
+    Duration,
+    ParseError,
 };
 
 
@@ -105,14 +106,14 @@ pub fn is_leap_year(year: u32) -> bool {
 }
 
 /// Parses a days since rfc3339-origin input to a DateTime<Utc> object
-pub fn parse_time(since: &str, days: f64) -> chrono::DateTime<Utc> {
-    let origin = DateTime::parse_from_rfc3339(since).expect("Wrong input").with_timezone(&Utc);
+pub fn parse_time(since: &str, days: f64) -> Result<DateTime<Utc>, ParseError> {
+    let origin = DateTime::parse_from_rfc3339(since)?.with_timezone(&Utc);
 
     let datetime = origin + Duration::seconds((days * 86400.0) as i64);
 
     // println!("Parsed {days} to {datetime}");
 
-    datetime
+    Ok(datetime)
 }
 
 /// Formats durations to human readable formats, e.g. 4h 33m 2s

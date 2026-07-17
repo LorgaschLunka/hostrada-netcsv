@@ -23,7 +23,7 @@ pub struct Config {
 
 impl Config {
     /// Load config. If no config file is found, this will create a new config with default values
-    /// If a config file is found, will use the one that exists.
+    /// If a config file is found, will check and then use the one that exists.
     pub fn create_dir() -> Result<(), ConfigError> {
         let config_dir = dirs::config_local_dir()
             .ok_or(ConfigError::DirNotFound)?
@@ -36,6 +36,11 @@ impl Config {
         if !fs::exists(&file_path)? {
             println!("No config file found.\nCreating default configuration file {}", &file_path.display());
             fs::write(&file_path, DEFAULT_CONFIG)?;
+        } else {
+            let temp = Self::load()?;
+            if let Err(_) = chrono::DateTime::parse_from_rfc3339(&temp.origin) {
+                return Err(ConfigError::InvalidConfig { val: temp.origin, var: "origin".to_string(), msg: "is not valid rfc3339".to_string()});
+            }
         }
 
         Ok(())
@@ -57,4 +62,5 @@ impl Config {
 
         Ok(config)
     }
+
 }

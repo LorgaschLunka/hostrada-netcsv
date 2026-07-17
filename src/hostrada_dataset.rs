@@ -76,6 +76,7 @@ impl HostradaDataset {
                 })
             })
             .collect()
+    
     }
 
     pub fn file(&self) -> &netcdf::File {
@@ -342,10 +343,19 @@ fn calculate_time_map(file: &netcdf::File) -> HashMap<DateTime<Utc>, f64> {
         .get::<f64,_>(..)
         .unwrap();
 
-    time_vals
+    let parsed= time_vals
         .into_iter()
-        .map(|val| (parse_time(&config.origin, val), val))
-        .collect()
+        .map(|val| {
+            parse_time(&config.origin, val)
+                .map(|time| (time, val))
+    })
+    .collect::<Result<HashMap<_, _>, _>>();
+
+    if let Err(e) = parsed {
+        eprintln!("Parse error {e}");
+        std::process::exit(1);
+    } 
+    return parsed.unwrap()
 }
 
 
