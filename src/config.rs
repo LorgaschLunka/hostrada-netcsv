@@ -46,7 +46,8 @@ impl Config {
     pub fn load() -> Result<Self, ConfigError> {
         let file_path = dirs::config_local_dir()
             .ok_or(ConfigError::DirNotFound)?
-            .join(DEFAULT_CONFIG_DIR_NAME);
+            .join(DEFAULT_CONFIG_DIR_NAME)
+            .join("config.toml");
 
         let toml_content = fs::read_to_string(file_path)?;
         
