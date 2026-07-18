@@ -6,7 +6,8 @@ use clap::{Parser,
 };
 
 use crate::{
-    config::Config, dates_and_times::YearMonth, error::ConfigError,
+    config::Config,
+    dates_and_times::YearMonth,
 };
 
 /// convert: Take a file or directory and convert all hostrada netcdf files found to a csv file
@@ -136,8 +137,8 @@ impl HostradaVar {
     /// Returns the link of the variable. This link looks like this: https://opendata.dwd.de/climate_environment/CDC/grids_germany/hourly/hostrada/VAR_NAME/ where 
     /// VAR_NAME is something like 'air_temperature_mean'
     /// # Errors
-    /// - As the base link is defined by the config file, this method propagates any ConfigErrors.
-    pub fn link(&self) -> Result<String, ConfigError> {
+    /// - As the base link is defined by the config file, this method propagates any errors from the config.
+    pub fn link(&self) -> anyhow::Result<String> {
         let config = Config::load()?;
         let mut base_link = config.base_link;
         

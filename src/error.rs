@@ -1,5 +1,3 @@
-use std::num::ParseFloatError;
-
 use thiserror;
 
 use crate::hostrada_pixel::HostradaGridPixel;
@@ -35,27 +33,5 @@ pub enum HostradaError {
     ParseError {
         context: String,
         e: chrono::ParseError,
-    }
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum ConfigError {
-    #[error("Could not determine user config directory")]
-    DirNotFound,
-
-    #[error(transparent)]
-    IOErr(#[from] std::io::Error),
-
-    #[error("toml error with {path}: {source}")]
-    TomlErr {
-        source: toml::de::Error,
-        path: std::path::PathBuf,
-    },
-
-    #[error("invalid config: value {val} for {var} {msg}")]
-    InvalidConfig {
-        val: String,
-        var: String,
-        msg: String,
     }
 }
