@@ -36,7 +36,7 @@ fn main() {
             eprintln!("CLI Error: {e}");
             std::process::exit(1);
         },
-        Ok(()) => ()
+        Ok(()) => (),
     }
 
     match cli.command {
