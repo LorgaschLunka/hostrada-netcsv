@@ -2,7 +2,7 @@ use std::{fs, io, path};
 use anyhow::Context;
 use log::warn;
 use crate::{
-    cli::HostradaVar,
+    hostrada_variable::HostradaVar,
     dates_and_times::YearMonth,
     misc::green_spinner,
 };

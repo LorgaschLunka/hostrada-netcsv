@@ -9,7 +9,7 @@ use chrono::Duration;
 use rayon::prelude::*;
 
 use crate::{
-    cli::HostradaVar,
+    hostrada_variable::HostradaVar,
     error::HostradaError,
     hostrada_dataset::HostradaDataset,
     misc::green_spinner,
@@ -179,7 +179,6 @@ fn setup(files: Vec<path::PathBuf>, x_y: Option<(usize, usize)>, output_dir: Opt
 }
 
 pub fn validate_files(dir: &path::PathBuf) -> anyhow::Result<()> {
-    
     
     let files: Vec<fs::DirEntry> = fs::read_dir(dir)?
         .collect::<Result<_, _>>()?;
