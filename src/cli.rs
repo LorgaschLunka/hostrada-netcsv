@@ -1,3 +1,6 @@
+use anyhow::{
+    ensure,
+};
 use clap::{Parser,
     Subcommand,
     ArgGroup,
@@ -23,6 +26,85 @@ pub enum Commands {
     Pixel(PixelArgs),
     Download(DownloadArgs),
     Origin(OriginArgs),
+}
+
+impl Cli {
+    /// Validates the user input. If this function returns an error, the user input is faultsy or something went wrong validating the input.
+    pub fn validate(&self) -> anyhow::Result<()> {
+        match &self.command {
+            Commands::Convert(args) => Cli::validate_convert(args),
+            Commands::Pixel(args) => Cli::validate_pixel(args),
+            Commands::Download(args) => Cli::validate_download(args),
+            Commands::Origin(args) => Cli::validate_origin(args),
+        }
+    }
+
+    /// Validates convert command input
+    /// ## Errors
+    /// - if the directorys or files are not valid directorys or netcdf files
+    fn validate_convert(args: &ConvertArgs) -> anyhow::Result<()> {
+        ensure!(args.output_dir.is_dir(), "Invalid output directory: {}", args.output_dir.display());
+
+        if let Some(dir) = &args.dir {
+            ensure!(dir.is_dir(), "Invalid input directory: {}", dir.display());
+        };
+
+        if let Some(file) = &args.file {
+            ensure!(file.is_file(), "Invalid input file: {}", file.display());
+
+            ensure!(
+                file.extension().and_then(|v| v.to_str()) == Some("nc"),
+                "File {} does not seem to be a netcdf file",
+                file.display()
+            );
+        };
+        Ok(())
+    }
+
+    /// Validates pixel command input.
+    /// ## Errors
+    /// - if the ref_file is not a valid netcdf file
+    /// - if lat/lon are higher/lower -90/90. Technically, this could be specified further by focussing to German area coordinates. But not for now.
+    fn validate_pixel(args: &PixelArgs) -> anyhow::Result<()> {
+        ensure!(args.ref_file.is_file(), "Invalid reference file: {}", args.ref_file.display());
+        
+        ensure!(
+            args.ref_file.extension().and_then(|v| v.to_str()) == Some("nc"),
+            "File {} does not seem to be a netcdf file",
+            args.ref_file.display()
+        );
+
+        ensure!(
+            !(args.lat.clamp(-90.0, 90.0).abs() == 90.0) && !(args.lon.clamp(-90.0, 90.0).abs() == 90.0),
+            "Out of bounds latitude or longitude: {}, {}",
+            args.lat, args.lon
+        );
+
+        Ok(())
+    }
+
+    /// Validates download command input.
+    /// ## Errors
+    /// - if the install directory is not a valid directory
+    fn validate_download(args: &DownloadArgs) -> anyhow::Result<()> {
+        ensure!(args.install_dir.is_dir(), "Invalid install directory: {}", args.install_dir.display());
+        Ok(())
+    }
+
+    /// Validates origin command input.
+    /// ## Errors
+    /// - if the file to get the origin from is not a valid netcdf file
+    fn validate_origin(args: &OriginArgs) -> anyhow::Result<()> {
+        ensure!(args.file_path.is_file(), "Invalid file to get origin from: {}", args.file_path.display());
+
+        ensure!(
+            args.file_path.extension().and_then(|v| v.to_str()) == Some("nc"),
+            "File {} does not seem to be a netcdf file",
+            args.file_path.display()
+        );
+
+        Ok(())
+    }
 }
 
 #[derive(Args, Debug)]

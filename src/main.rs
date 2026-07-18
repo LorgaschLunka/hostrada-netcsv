@@ -31,6 +31,13 @@ fn main() {
     }
 
     let cli = Cli::parse();
+    match cli.validate() {
+        Err(e) => {
+            eprintln!("CLI Error: {e}");
+            std::process::exit(1);
+        },
+        Ok(()) => ()
+    }
 
     match cli.command {
         Commands::Convert(args) => convert::run(args),
