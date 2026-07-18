@@ -1,9 +1,9 @@
 use std::{fs, io, path};
+use anyhow::Context;
 use log::warn;
 use crate::{
     cli::HostradaVar,
     dates_and_times::YearMonth,
-    error::DownloadError,
     misc::green_spinner,
 };
 
@@ -11,7 +11,9 @@ use crate::{
 pub fn download_file(variable: &HostradaVar, date: YearMonth, install_dir: &path::PathBuf, client: &reqwest::blocking::Client) -> anyhow::Result<()> {
     let spinner = green_spinner();
 
-    let mut download_link = variable.link()?;
+    let mut download_link = variable.link()
+        .with_context(|| format!("Failed to extract download link for variable {variable}"))?;
+
     let filename = format!("{}_1hr_HOSTRADA-v1-0_BE_gn_{}{:02}0100-{}{:02}{:02}23.nc", variable.abbr(), date.year, date.month, date.year, date.month, date.days_in_month());
     
     download_link.push_str(&filename);
@@ -31,16 +33,46 @@ pub fn download_file(variable: &HostradaVar, date: YearMonth, install_dir: &path
     let mut inner_install_dir = install_dir.clone();
     inner_install_dir.push(&filename);
     
-    let mut file = fs::File::create(&inner_install_dir)
-        .map_err(|e| DownloadError::IOErr {
-            source: e,
-            path: inner_install_dir,
-        })?;
+    let mut active_file = ActiveFile::new(inner_install_dir);
+    let mut file = fs::File::create(&active_file.path)
+        .with_context(|| format!("Could not create file {}", active_file.path.display()))?;
 
     io::copy(&mut response, &mut file)
-        .map_err(DownloadError::ReaderWriterErr)?;
+        .with_context(|| format!("while streaming to {}. Could be a network error", active_file.path.display()))?;
 
+    active_file.complete();
     spinner.finish_with_message(format!("Downloading {}...Done", &filename));
 
     Ok(())
+}
+
+
+/// Little helper struct for the file that is currently written to. Implements drop to be dropped if anything goes wrong without the file being completed.
+struct ActiveFile {
+    path: path::PathBuf,
+    completed: bool,
+}
+
+impl ActiveFile {
+    /// Create a new, uncompleted active file
+    pub fn new(path: path::PathBuf) -> Self {
+        Self { path, completed: false }
+    }
+
+    /// Complete this file (i.e. set completed = true)
+    pub fn complete(&mut self) {
+        self.completed = true;
+    }
+
+    // pub fn completed(&self) -> bool {
+    //     self.completed
+    // }
+}
+
+impl Drop for ActiveFile {
+    fn drop(&mut self) {
+        if !self.completed {
+            let _ = fs::remove_file(&self.path);
+        }       
+    }
 }

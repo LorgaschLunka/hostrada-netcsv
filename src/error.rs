@@ -39,30 +39,6 @@ pub enum HostradaError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum DownloadError {
-    #[error(transparent)]
-    RequestErr(#[from] reqwest::Error),
-    
-    #[error(transparent)]
-    MetadataToStrErr(#[from] reqwest::header::ToStrError),
-
-    #[error(transparent)]
-    ParseFloatErr(#[from] ParseFloatError),
-
-    #[error("I/O error while accessing {path}: {source}")]
-    IOErr {
-        source: std::io::Error,
-        path: std::path::PathBuf,
-    },
-
-    #[error(transparent)]
-    ReaderWriterErr(#[from] std::io::Error),
-
-    #[error(transparent)]
-    ConfigError(#[from] ConfigError),
-}
-
-#[derive(Debug, thiserror::Error)]
 pub enum ConfigError {
     #[error("Could not determine user config directory")]
     DirNotFound,
