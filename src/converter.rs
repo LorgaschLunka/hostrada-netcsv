@@ -219,7 +219,7 @@ fn compare_file_size(entry: &fs::DirEntry, client: &reqwest::blocking::Client) -
         .send()?
         .error_for_status()?;
 
-    let exp_content_length = response.content_length().unwrap();
+    let exp_content_length = response.content_length().ok_or(anyhow::anyhow!("Could not get content length"))?;
 
     let rl_content_length = entry.metadata()?.len();
     Ok(exp_content_length == rl_content_length)

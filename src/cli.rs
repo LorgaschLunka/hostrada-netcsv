@@ -1,3 +1,5 @@
+use std::path;
+
 use anyhow::{
     ensure,
 };
@@ -47,6 +49,8 @@ impl Cli {
 
         if let Some(dir) = &args.dir {
             ensure!(dir.is_dir(), "Invalid input directory: {}", dir.display());
+           
+            ensure!(Cli::only_contains_nc(dir)?, "Directory {} contains invalid files (no .nc extension)", dir.display());
         };
 
         if let Some(file) = &args.file {
@@ -104,6 +108,18 @@ impl Cli {
         );
 
         Ok(())
+    }
+
+    /// Checks if a directory only contains .nc files
+    fn only_contains_nc(dir: &path::PathBuf) -> anyhow::Result<bool> {
+        Ok(std::fs::read_dir(dir)?
+            .filter_map(|entry| entry.ok())
+            .map(|e| e
+                    .path()
+                    .extension()
+                    .and_then(|v| v.to_str()) == Some("nc"))
+            .all(|e| e)
+        )
     }
 }
 
