@@ -79,7 +79,6 @@ impl HostradaDataset {
                 })
             })
             .collect()
-    
     }
 
     pub fn file(&self) -> &netcdf::File {
@@ -99,8 +98,9 @@ impl HostradaDataset {
         }
     }
 
-    /// Return the earliest date in the dataset and its corresponding days since origin
-    /// Panics if partial_cmp returns None.
+    /// Return the earliest date in the dataset and its corresponding days since origin.
+    /// ## Panics
+    /// Panics if partial_cmp returns None, which only happens if the time_map is empty which should absolutely not happen.
     pub fn start_date(&self) -> Option<(&DateTime<Utc>, &f64)> {
         self
             .time_map
@@ -108,8 +108,9 @@ impl HostradaDataset {
             .min_by(|(_, a), (_, b)| a.partial_cmp(b).expect("Couldn't sort dates."))
     }
 
-    /// Return the latest date in the dataset and its corresponding days since origin
-    /// Panics if partial_cmp returns None.
+    /// Return the latest date in the dataset and its corresponding days since origin.
+    /// ## Panics
+    /// Panics if partial_cmp returns None, which only happens if the time_map is empty which should absolutely not happen.
     pub fn end_date(&self) -> Option<(&DateTime<Utc>, &f64)> {
         self
             .time_map

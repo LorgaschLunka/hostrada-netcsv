@@ -131,8 +131,14 @@ impl Cli {
 ))]
 pub struct ConvertArgs {
     /// convert full hostrada grid (CAUTION: May take a long time, will produce really large data (up to >10 GB) which is very inefficient for csv. It is highly suggested to select pixels of interest and only convert data for those pixels)
-    #[arg(short, long)]
+    #[arg(short, long, conflicts_with = "merge")]
     pub all: bool,
+
+    /// merge resulting files into 1 file, instead of creating a new one. Only available if --all flag is not present.
+    /// Do only use this flag if the input directory only contains hostrada files for one variable! All of them will be written into one file, without any guarantees of order or anything.
+    /// In file mode, this does nothing.
+    #[arg(short, long, conflicts_with = "all")]
+    pub merge: bool,
 
     /// convert file mode
     #[arg(short = 'f', long)]

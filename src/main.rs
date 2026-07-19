@@ -23,7 +23,7 @@ use crate::{
 
 
 fn main() {
-    env_logger::Builder::from_env(Env::default().default_filter_or("debug")).init();
+    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
     if let Err(e) = Config::create_dir() {
         eprintln!("{} {e}", "Error with config file:\n╰─▶".red().bold());

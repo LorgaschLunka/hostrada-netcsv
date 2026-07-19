@@ -1,11 +1,14 @@
-use std::{fs,
-    io::{self, BufWriter, Write},
-    path,
-    time::Instant,
+use std::{fs, io::{self, BufWriter, Write}, path,
+    time::{
+        Instant,
+    },
 };
 use log::{warn};
 use indicatif::{ProgressBar, ProgressStyle};
-use chrono::Duration;
+use chrono::{
+    Duration,
+    Local
+};
 use rayon::prelude::*;
 
 use crate::{
@@ -104,47 +107,14 @@ pub fn convert_all_values(files: Vec<path::PathBuf>, output_dir: path::PathBuf) 
     Ok(())
 }
 
-pub fn convert_pixel(files: Vec<path::PathBuf>, x: usize, y: usize, mut output_dir: path::PathBuf) -> Result<(), HostradaError> {
-    let spinner = green_spinner();
-    let (datasets, wtr, var_id) = setup(files, Some((x, y)), Some(&mut output_dir))?;
-    let mut wtr = wtr.unwrap();
-    writeln!(wtr, "timestamp,{}", var_id)?;
-    spinner.finish();
-    // iterate through datasets and write data to csv
-    for dataset in datasets {
-        let mut current = dataset.start_date().unwrap().0.clone();
-        let end_date = dataset.end_date().unwrap().0.clone();
-        
-        // progressbar stuff
-        let diff = (end_date-current).num_hours();
-        
-        let pb = ProgressBar::new(diff as u64);
-        pb.set_style(ProgressStyle::with_template(
-            "{spinner:.green} [{bar:40.green}] {percent}% [{eta}] {msg}"
-        ).unwrap().progress_chars("->o"));
 
-        pb.set_message(format!("Converting pixel ({}/{}) {:?}...", x, y, dataset.file().path().unwrap()));
+// ISSUES:
+    // Unterschiedliche Dateien für unterschiedliche Variablen
+    // nicht zusammenhängende downloads (z.B. 2001 und 2005 aber nicht 2002-2004)
+// LÖSUNG:
+    // Alles einzelne dateien, bei einem --merge befehl werden sie aber dann zusammen in eine datei geschrieben 
+        // ist die frage ob der nutzer dann einfach drauf achten soll, dass in dem directory nur eine variable mit konsistenter zeit abgebildet ist... mal schauen
 
-        pb.enable_steady_tick(std::time::Duration::from_millis(100));
-
-        let start = Instant::now();
-        // actual writing and increment progressbar
-        while current <= end_date{
-
-            let val = dataset.value_at(&var_id, &current, x, y).unwrap();
-
-            // also fix floating point error
-            writeln!(wtr, "{},{:.2}", current, val)?;
-
-            current += Duration::hours(1);
-            pb.inc(1);
-        }
-
-        pb.finish_with_message(format!("Done. ({:.02}s)", start.elapsed().as_secs_f32()));
-    }
-
-    Ok(())
-}
 
 fn setup(files: Vec<path::PathBuf>, x_y: Option<(usize, usize)>, output_dir: Option<&mut path::PathBuf>) -> Result<(Vec<HostradaDataset>, Option<io::BufWriter<fs::File>>, String), HostradaError> {
     // can also be 1 dataset in single file mode
@@ -178,7 +148,93 @@ fn setup(files: Vec<path::PathBuf>, x_y: Option<(usize, usize)>, output_dir: Opt
 
 }
 
-pub fn validate_files(dir: &path::PathBuf) -> anyhow::Result<()> {
+
+pub fn convert_pixel(files: Vec<path::PathBuf>, x: usize, y: usize, output_dir: &path::PathBuf, merge: bool) -> anyhow::Result<()> {
+    let spinner = green_spinner();
+    let datasets = HostradaDataset::from_filelist_same_grids(files)?;
+    spinner.finish();
+    let mut mode = if merge {
+        let var_id = datasets.first().unwrap().var_id().ok_or(anyhow::anyhow!("Did not found a var id for merged file"))?;
+        let file_name = output_dir
+            .join(format!("merged_{}_pix_{}_{}_{}_merged.csv",var_id, x, y, Local::now().to_rfc3339()));
+        let file = fs::File::create(file_name)?;
+
+        ConvertMode::Combined(io::BufWriter::new(file))
+
+    } else {
+        ConvertMode::Seperate()
+    };
+
+    for dataset in datasets {
+        convert_dataset(dataset, x, y, &output_dir, &mut mode)?;
+    }
+    Ok(())
+}
+
+/// Handles conversion of a single dataset. When in Seperate mode, creates its own file and writer. When in Combined mode, the wtr held by ConvertMode::Combined(wtr) is used.
+fn convert_dataset(dataset: HostradaDataset, x: usize, y: usize, output_dir: &path::PathBuf, mode: &mut ConvertMode) -> anyhow::Result<()> {
+    let mut current = dataset.start_date().unwrap().0.clone();
+    let end_date = dataset.end_date().unwrap().0.clone();
+    let diff = (end_date-current).num_hours() as u64;
+
+    let path = dataset.file().path()?;
+
+    // illegal stuff to make this work without code duplication
+    let mut local_wtr;
+    let wtr = match mode {
+        ConvertMode::Seperate() => {
+            let res_file_name = output_dir
+                .clone()
+                .join(format!("pix_{}_{}_{}.csv", x, y, path.file_stem().unwrap().display()));
+            let file = fs::File::create(res_file_name)?;
+            local_wtr = io::BufWriter::new(file);
+
+            &mut local_wtr
+        },
+        ConvertMode::Combined(wtr) => wtr,
+    };
+    
+    let var_id = dataset.var_id()
+        .ok_or(anyhow::anyhow!("Failed to get variable id for {}", path.display()))?;
+
+    let pb = converter_pb(diff);
+    pb.set_message(format!("Converting pixel ({}/{}) {:?}...", x, y, path));
+
+    while current <= end_date {
+
+        let val = dataset.value_at(&var_id, &current, x, y).unwrap_or(-8888.0);
+
+        // also fix floating point error
+        writeln!(wtr, "{},{:.2}", current, val)?;
+
+        current += Duration::hours(1);
+        pb.inc(1);
+    }
+
+    pb.finish_with_message(format!("Done. ({:.02}s)", pb.elapsed().as_secs_f32()));
+
+    Ok(())
+
+}
+
+fn converter_pb(len: u64) -> ProgressBar {
+    let pb = ProgressBar::new(len);
+    pb.set_style(ProgressStyle::with_template("{spinner:.green} [{bar:40.green}] {percent}% [{eta}] {msg}").unwrap()
+        .progress_chars("->o")
+    );
+    pb.enable_steady_tick(std::time::Duration::from_millis(75));
+
+    pb
+}
+
+pub enum ConvertMode {
+    Seperate(),
+    Combined(BufWriter<fs::File>),
+}
+
+/// Compares the files in the directory with their size on the hostrada server.
+/// Does not return an error if they don't match, but returns the path of the entry that does not match.
+pub fn validate_files(dir: &path::PathBuf) -> anyhow::Result<Option<path::PathBuf>> {
     
     let files: Vec<fs::DirEntry> = fs::read_dir(dir)?
         .collect::<Result<_, _>>()?;
@@ -193,14 +249,11 @@ pub fn validate_files(dir: &path::PathBuf) -> anyhow::Result<()> {
     
     for tup in &res {
         if !tup.1 {
-            warn!("Size of file {:?} does not match with server sided filesize! Please try redownload", tup.0.file_name());
+            return Ok(Some(tup.0.path()));
         }
     }
 
-    if res.iter().map(|tup| tup.1).collect::<Vec<bool>>().contains(&false) {
-        std::process::exit(1);
-    }
-    Ok(())
+    Ok(None)
 }
 
 /// Compares the filesize of a given DirEntry with the filesize on the dwd hostrada server of the respective file
