@@ -134,6 +134,9 @@ pub struct ConvertArgs {
     #[arg(short, long, conflicts_with = "merge")]
     pub all: bool,
 
+    /// skip nan values when converting all values (represented in hostrada dataset as -9999). This can reduce file size by up to ~50%.
+    #[arg(short, long, requires = "all")]
+    pub skip_nan: bool,
     /// merge resulting files into 1 file, instead of creating a new one. Only available if --all flag is not present.
     /// Do only use this flag if the input directory only contains hostrada files for one variable! All of them will be written into one file, without any guarantees of order or anything.
     /// In file mode, this does nothing.

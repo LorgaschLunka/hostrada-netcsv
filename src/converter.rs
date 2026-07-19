@@ -20,7 +20,7 @@ use crate::{
 /// Converts all values of a file into csv format, in order time, y, x (this means that first, all x values for the first timestamp for the first y are displayed and so on).
 /// The use of this function is strongly discouraged, as >700 files are created (1 for each hour).
 /// Currently, x and y for each value are hard coded (x 0-719, y 0-937)
-pub fn convert_all_values(files: Vec<path::PathBuf>, output_dir: &path::PathBuf) -> anyhow::Result<()> {
+pub fn convert_all_values(files: Vec<path::PathBuf>, output_dir: &path::PathBuf, skip_nan: bool) -> anyhow::Result<()> {
     warn!("The use of this functionality is strongly discouraged! Expect >700 csv files!");
     let spinner = green_spinner();
     let datasets = HostradaDataset::from_filelist_same_grids(files)?;
@@ -70,7 +70,9 @@ pub fn convert_all_values(files: Vec<path::PathBuf>, output_dir: &path::PathBuf)
                 } else {
                     *val
                 };
-
+                if skip_nan && (val == -9999.0 as f32) {
+                    continue;
+                }
                 writeln!(wtr, "{:.2},{},{}", val, &x_y[idx].0, &x_y[idx].1).unwrap();
             }
 
