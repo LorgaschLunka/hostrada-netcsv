@@ -20,58 +20,47 @@ use crate::{
 /// Converts all values of a file into csv format, in order time, y, x (this means that first, all x values for the first timestamp for the first y are displayed and so on).
 /// The use of this function is strongly discouraged, as >700 files are created (1 for each hour).
 /// Currently, x and y for each value are hard coded (x 0-719, y 0-937)
-pub fn convert_all_values(files: Vec<path::PathBuf>, output_dir: path::PathBuf) -> anyhow::Result<()> {
+pub fn convert_all_values(files: Vec<path::PathBuf>, output_dir: &path::PathBuf) -> anyhow::Result<()> {
     warn!("The use of this functionality is strongly discouraged! Expect >700 csv files!");
     let spinner = green_spinner();
     let datasets = HostradaDataset::from_filelist_same_grids(files)?;
-    
-    // use first dataset to extract variable_id for output filename
-    let var_id = datasets.first().unwrap().var_id().ok_or(anyhow::anyhow!("Did not found a var id for merged file"))?;
-
-    let mut dataset_count = 1;
 
     let x_y: Vec<(usize, usize)> = (0..938)
         .flat_map(|y| (0..720).map(move |x| (x, y)))
         .collect();
-
     spinner.finish();
+    
     // iterate through datasets and pixels and write data to csv
-    for dataset in &datasets {
+    for (idx, dataset) in datasets.iter().enumerate() {
         let mut current = dataset.start_date().unwrap().0.clone();
         let end_date = dataset.end_date().unwrap().0.clone();
 
         // progressbar stuff
         let diff = (end_date-current).num_hours() as u64;
         let pb = converter_pb(diff);
-        pb.set_message(format!("Converting dataset {}/{}", dataset_count, datasets.len()));
+        pb.set_message(format!("Converting dataset {}/{}", idx+1, datasets.len()));
+
+        // extract var_id for each dataset to support different variables in same directory
+        let var_id = dataset.var_id().ok_or(anyhow::anyhow!("Did not found a var id for merged file"))?;
 
         // actual writing and increment progressbar
         while current <= end_date {
             // setup hourly file
-            let mut inner_output_dir = output_dir.clone();
-            let hourly_filename = path::PathBuf::from(&format!("{}_{}_converted.csv", var_id, current));
-            inner_output_dir.push(hourly_filename);
+            let inner_output_dir = output_dir.join(path::PathBuf::from(&format!("{}_{}_converted.csv", var_id, current)));
 
             let hourly_file = fs::File::create(inner_output_dir)?;
             let mut wtr = BufWriter::new(hourly_file);
             writeln!(wtr, "{},pixel_x, pixel_y", var_id)?;
 
-
-
-            let hourly_data  = dataset.file().variable(&var_id).unwrap().get::<f32, _>((dataset.time_index(&current).unwrap(), .., ..))?;
+            let hourly_data  = dataset
+                .file()
+                .variable(&var_id)
+                .unwrap()
+                .get::<f32, _>((dataset.time_index(&current).unwrap(), .., ..))?;
 
             let scale_factor = dataset.scale_factor(&var_id);
             for (idx, val) in hourly_data.iter().enumerate() {
                 // apply scale factor
-                // if let Some(factor) = scale_factor {
-                //     let val = val * factor as f32;
-                //     writeln!(wtr, "{},{}", current, val).unwrap();
-                // } else {
-                //     writeln!(wtr, "{},{}", current, val).unwrap();
-                // };
-
-                // KRASSER
-
                 let val = if let Some(factor) = scale_factor {
                     val * factor as f32
                 } else {
@@ -81,14 +70,12 @@ pub fn convert_all_values(files: Vec<path::PathBuf>, output_dir: path::PathBuf) 
                 writeln!(wtr, "{:.2},{},{}", val, &x_y[idx].0, &x_y[idx].1).unwrap();
             }
 
-
             current += Duration::hours(1);
             pb.inc(1); // let this stay here to reduce computing needed for pb
 
         }
 
         pb.finish_with_message(format!("Done with 1 dataset. ({:.02}s)", pb.elapsed().as_secs_f32()));
-        dataset_count += 1;
 
     }
 
@@ -107,7 +94,7 @@ pub fn convert_pixel(files: Vec<path::PathBuf>, x: usize, y: usize, output_dir: 
         let file = fs::File::create(file_name)?;
 
         let mut wtr = io::BufWriter::new(file);
-        write!(wtr, "timestamp, {}", var_id)?;
+        writeln!(wtr, "timestamp, {}", var_id)?;
 
         ConvertMode::Combined(wtr)
 
@@ -142,7 +129,7 @@ fn convert_dataset(dataset: HostradaDataset, x: usize, y: usize, output_dir: &pa
             let file = fs::File::create(res_file_name)?;
             local_wtr = io::BufWriter::new(file);
 
-            write!(local_wtr, "timestamp, {}", var_id)?;
+            writeln!(local_wtr, "timestamp, {}", var_id)?;
 
 
             &mut local_wtr

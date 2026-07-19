@@ -6,7 +6,7 @@ pub fn run(args: ConvertArgs) {
     match (args.file, args.dir) {
         (Some(file_path), None) => if args.all {
             // Get all values of one file 
-            convert_all_values(vec![file_path.clone()], args.output_dir).unwrap_or_else(|err| {
+            convert_all_values(vec![file_path.clone()], &args.output_dir).unwrap_or_else(|err| {
                 eprintln!("Failed to convert all values for {:?}: {err}", file_path);
                 std::process::exit(1);
             });
@@ -39,7 +39,7 @@ pub fn run(args: ConvertArgs) {
             });
             let files = collect_paths(paths);
 
-            convert_all_values(files, args.output_dir).unwrap_or_else(|err| {
+            convert_all_values(files, &args.output_dir).unwrap_or_else(|err| {
                 eprintln!("Failed to convert all values for directory {:?}: {err}", dir_path);
                 std::process::exit(1);
             });
