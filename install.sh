@@ -3,6 +3,12 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
+if ! pkg-config --exists netcdf; then
+   echo "WARNING netcdf NOT FOUND"
+   echo "Install first with"
+   echo "   Arch: sudo pacman -S netcdf"
+fi
+
 workdir=$(pwd)
 
 target_bin_dir="/usr/bin"

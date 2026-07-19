@@ -3,6 +3,7 @@ use std::{
     io::{self, BufWriter, Write}, 
     path,
 };
+use anyhow::Context;
 use log::{warn};
 use indicatif::{ProgressBar, ProgressStyle};
 use chrono::{
@@ -34,7 +35,8 @@ pub fn convert_all_values(files: Vec<path::PathBuf>, output_dir: &path::PathBuf,
     for (idx, dataset) in datasets.iter().enumerate() {
         // mk dir for each dataset
         let dataset_dir = &output_dir.join(dataset.file().path()?.file_stem().expect("This should not be possible!"));
-        fs::create_dir(dataset_dir)?;
+        fs::create_dir_all(dataset_dir)
+            .with_context(|| format!("Error creating directory for csv files {}", dataset_dir.display()))?;
 
         let mut current = dataset.start_date().unwrap().0.clone();
         let end_date = dataset.end_date().unwrap().0.clone();
