@@ -29,9 +29,13 @@ pub fn convert_all_values(files: Vec<path::PathBuf>, output_dir: &path::PathBuf)
         .flat_map(|y| (0..720).map(move |x| (x, y)))
         .collect();
     spinner.finish();
-    
+
     // iterate through datasets and pixels and write data to csv
     for (idx, dataset) in datasets.iter().enumerate() {
+        // mk dir for each dataset
+        let dataset_dir = &output_dir.join(dataset.file().path()?.file_stem().expect("This should not be possible!"));
+        fs::create_dir(dataset_dir)?;
+
         let mut current = dataset.start_date().unwrap().0.clone();
         let end_date = dataset.end_date().unwrap().0.clone();
 
@@ -46,7 +50,7 @@ pub fn convert_all_values(files: Vec<path::PathBuf>, output_dir: &path::PathBuf)
         // actual writing and increment progressbar
         while current <= end_date {
             // setup hourly file
-            let inner_output_dir = output_dir.join(path::PathBuf::from(&format!("{}_{}_converted.csv", var_id, current)));
+            let inner_output_dir = dataset_dir.join(path::PathBuf::from(&format!("{}_{}_converted.csv", var_id, current)));
 
             let hourly_file = fs::File::create(inner_output_dir)?;
             let mut wtr = BufWriter::new(hourly_file);
