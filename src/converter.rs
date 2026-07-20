@@ -13,8 +13,7 @@ use chrono::{
 use rayon::prelude::*;
 
 use crate::{
-    hostrada_variable::HostradaVar,
-    hostrada_dataset::HostradaDataset,
+    hostrada_dataset::{HostradaDataset, HostradaFile},
     misc::green_spinner,
 };
 
@@ -206,14 +205,13 @@ pub fn validate_files(dir: &path::PathBuf) -> anyhow::Result<Option<path::PathBu
 
 /// Compares the filesize of a given DirEntry with the filesize on the dwd hostrada server of the respective file
 fn compare_file_size(entry: &fs::DirEntry, client: &reqwest::blocking::Client) -> anyhow::Result<bool> {
-    let file_name = entry.file_name();
-    let file_name = file_name.to_str().unwrap();
+    let file = HostradaFile::new(entry.path())
+        .with_context(|| format!("Failed to load file for file size validation: {}", entry.path().display()))?;
 
-    let var = file_name.split_once("_").unwrap().0;
-    let var = HostradaVar::from_abbr(var).unwrap();
-
-    let mut link = var.link()?;
-    link.push_str(file_name);
+    let var = file.hostrada_var()
+        .expect("Failed to read in variable. Should be unreachable");
+    
+    let link = format!("{}{}", var.link()?, file.file_name()?.display());
 
     let response = client
         .get(&link)

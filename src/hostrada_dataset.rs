@@ -1,7 +1,5 @@
 use std::{
-    collections::HashMap,
-    sync::Arc,
-    time::Instant
+    collections::HashMap, path, sync::Arc, time::Instant
 };
 use chrono::{DateTime, Utc};
 use rayon::prelude::*;
@@ -10,11 +8,7 @@ use num_traits::{Float, FromPrimitive};
 use netcdf::AttributeValue;
 
 use crate::{
-    hostrada_pixel::HostradaGridPixel, 
-    error::HostradaError,
-    config::Config,
-    dates_and_times::parse_time,
-    misc::{haversine, WithDistance},
+    config::Config, dates_and_times::parse_time, error::HostradaError, hostrada_pixel::HostradaGridPixel, hostrada_variable::HostradaVar, misc::{WithDistance, haversine},
 };
 
 
@@ -28,6 +22,56 @@ pub struct HostradaDataset {
     pub time_map: HashMap<DateTime<Utc>, f64>,
 }
 
+/// This struct can be used, if the dataset wants to be used without grid or time map. This could be the case, if only some metadata wants to be
+pub struct HostradaFile {
+    file: netcdf::File,
+}
+impl HostradaFile {
+    pub fn new<P>(file_path: P) -> Result<HostradaFile, HostradaError>
+    where 
+        P: AsRef<std::path::Path>
+    {
+        let file_path = file_path.as_ref();
+        let file = netcdf::open(file_path)?;
+
+        Ok(Self { file })
+    }
+
+    pub fn file(&self) -> &netcdf::File {
+        &self.file
+    }
+
+    /// Shortcut for file().path()
+    pub fn path(&self) -> Result<path::PathBuf, HostradaError> {
+        Ok(self.file.path()?)
+    }
+
+    /// Shortcut for the filename of the file
+    pub fn file_name(&self) -> Result<std::ffi::OsString, HostradaError>{
+        Ok(self.file.path()?.file_name().expect("unreachable").to_os_string())
+    }
+
+    /// Check the value of the netcdf attribute 'variable_id'. This is important for
+    /// the program to know, what variable it is looking at. Example: 'tas' for 'air temperature mean'.
+    /// None is returned if attribute variable_id couldn't be found, no value is present or the value is not uniformly Str(some_str).
+    /// As the program will likely crash if this happens, it is recommended to put a warning somewhere if this function returns None.
+    pub fn var_id(&self) -> Option<String> {
+        match self.file.attribute("variable_id")?.value().ok()? {
+            AttributeValue::Str(variable_id) => return Some(variable_id),
+            _ => {
+                return None;
+            }
+        }
+    }
+
+    /// Build the HostradaVar struct out of this file
+    pub fn hostrada_var(&self) -> Option<HostradaVar> {
+        let var_id = self.var_id()?;
+
+        HostradaVar::from_abbr(&var_id)
+    }
+
+}
 impl HostradaDataset {
     pub fn new<P>(file_path: P) -> Result<HostradaDataset, HostradaError>
     where 

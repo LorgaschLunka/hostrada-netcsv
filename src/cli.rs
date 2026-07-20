@@ -130,7 +130,7 @@ impl Cli {
         .args(["file", "dir"]) // bezieht sich auf die Namen der fields
 ))]
 pub struct ConvertArgs {
-    /// convert full hostrada grid (CAUTION: May take a long time, will produce really large data (up to >10 GB) which is very inefficient for csv. It is highly suggested to select pixels of interest and only convert data for those pixels)
+    /// convert full hostrada grid (CAUTION: May take a long time, will produce really large data (up to >10 GB). It is highly suggested to select pixels of interest and only convert data for those pixels)
     #[arg(short, long, conflicts_with = "merge")]
     pub all: bool,
 
