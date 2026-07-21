@@ -72,6 +72,7 @@ impl HostradaFile {
     }
 
 }
+
 impl HostradaDataset {
     pub fn new<P>(file_path: P) -> Result<HostradaDataset, HostradaError>
     where 
@@ -290,8 +291,17 @@ impl HostradaDataset {
         } else {
             return None
         };
+    }
 
-        
+    // NEXT:
+    /// Generate a ascending sorted list of all DataTime<Utc> keys of the time map 
+    pub fn sorted_time(&self) -> Vec<&DateTime<Utc>> {
+        let mut keys: Vec<_> = self.time_map
+            .keys()
+            .collect();
+        keys.sort_unstable();
+
+        keys
     }
 
 

@@ -74,7 +74,7 @@ pub fn convert_all_values(files: Vec<path::PathBuf>, output_dir: &path::PathBuf,
                 if skip_nan && (val == -9999.0 as f32) {
                     continue;
                 }
-                writeln!(wtr, "{:.2},{},{}", val, &x_y[idx].0, &x_y[idx].1).unwrap();
+                writeln!(wtr, "{:.2},{},{}", val, &x_y[idx].0, &x_y[idx].1)?;
             }
 
             current += Duration::hours(1);
@@ -97,7 +97,7 @@ pub fn convert_pixel(files: Vec<path::PathBuf>, x: usize, y: usize, output_dir: 
     let mut mode = if merge {
         let var_id = datasets.first().unwrap().var_id().ok_or(anyhow::anyhow!("Did not found a var id for merged file"))?;
         let file_name = output_dir
-            .join(format!("merged_{}_pix_{}_{}_{}_merged.csv",var_id, x, y, Local::now().to_rfc3339()));
+            .join(format!("merged_{}_pix_{}_{}_{}.csv",var_id, x, y, Local::now().to_rfc3339()));
         let file = fs::File::create(file_name)?;
 
         let mut wtr = io::BufWriter::new(file);
@@ -117,10 +117,6 @@ pub fn convert_pixel(files: Vec<path::PathBuf>, x: usize, y: usize, output_dir: 
 
 /// Handles conversion of a single dataset. When in Seperate mode, creates its own file and writer. When in Combined mode, the wtr held by ConvertMode::Combined(wtr) is used.
 fn convert_dataset(dataset: HostradaDataset, x: usize, y: usize, output_dir: &path::PathBuf, mode: &mut ConvertMode) -> anyhow::Result<()> {
-    let mut current = dataset.start_date().unwrap().0.clone();
-    let end_date = dataset.end_date().unwrap().0.clone();
-    let diff = (end_date-current).num_hours() as u64;
-
     let path = dataset.file().path()?;
 
     let var_id = dataset.var_id()
@@ -144,21 +140,25 @@ fn convert_dataset(dataset: HostradaDataset, x: usize, y: usize, output_dir: &pa
         ConvertMode::Combined(wtr) => wtr,
     };
     
-    let pb = converter_pb(diff);
-    pb.set_message(format!("Converting pixel ({}/{}) {:?}...", x, y, path));
+    let pb = green_spinner();
+    pb.set_message(format!("Converting pixel ({}/{}) {}...", x, y, path.display()));
 
-    while current <= end_date {
+    let values = dataset.file().variable(&var_id).unwrap().get::<f32, _>((.., x, y)).unwrap();
+    let timestamps = dataset.sorted_time();
 
-        let val = dataset.value_at(&var_id, &current, x, y).unwrap_or(-8888.0);
-
-        // also fix floating point error
-        writeln!(wtr, "{},{:.2}", current, val)?;
-
-        current += Duration::hours(1);
+    let scale_factor = dataset.scale_factor(&var_id);
+    for (val, timestamp) in values.iter().zip(timestamps.into_iter()) {
+        // apply scale factor
+        let val = if let Some(factor) = scale_factor {
+            val * factor as f32
+        } else {
+            *val
+        };
+        writeln!(wtr, "{}, {:.2}", timestamp, val)?;
         pb.inc(1);
     }
 
-    pb.finish_with_message(format!("Done. ({:.02}s)", pb.elapsed().as_secs_f32()));
+    pb.finish_with_message(format!("Done. ({:.02}s) {}", pb.elapsed().as_secs_f32(), path.display()));
 
     Ok(())
 
