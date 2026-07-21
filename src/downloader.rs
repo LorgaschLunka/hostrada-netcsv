@@ -2,9 +2,7 @@ use std::{fs, io, path};
 use anyhow::Context;
 use log::warn;
 use crate::{
-    hostrada_variable::HostradaVar,
-    dates_and_times::YearMonth,
-    misc::green_spinner,
+    dates_and_times::YearMonth, hostrada_variable::HostradaVar, misc::green_spinner,
 };
 
 /// Handles the download of exaktly one file identified by variable and date, using the supplied client
@@ -23,12 +21,14 @@ pub fn download_file(variable: &HostradaVar, date: YearMonth, install_dir: &path
         .send()?
         .error_for_status()?;
 
-    if let Some(size) = response.content_length() {
+    let size = if let Some(size) = response.content_length() {
         spinner.set_message(format!("Downloading {} ({:.02}mb)...", &filename, (size as f64/1000000.0)));
+        Some(size)
     } else {
         warn!("Unable to get filesize. This could be a sign, that the file is corrupted. Could also be fine.");
         spinner.set_message(format!("Downloading {} (Unknown)...", &filename));
-    }
+        None
+    };
     
     let mut inner_install_dir = install_dir.clone();
     inner_install_dir.push(&filename);
@@ -37,12 +37,19 @@ pub fn download_file(variable: &HostradaVar, date: YearMonth, install_dir: &path
     let mut file = fs::File::create(&active_file.path)
         .with_context(|| format!("Could not create file {}", active_file.path.display()))?;
 
+    let start_download = std::time::Instant::now();
     io::copy(&mut response, &mut file)
         .with_context(|| format!("while streaming to {}. Could be a network error", active_file.path.display()))?;
+    let download_elapsed = start_download.elapsed().as_secs_f32();
 
     active_file.complete();
-    spinner.finish_with_message(format!("Downloading {}...Done", &filename));
 
+    if let Some(size) = size {
+        spinner.finish_with_message(format!("Downloading {}...Done ({:.02} mb/s)", &filename, (size as f32/download_elapsed)/1000000.0));
+    } else {
+        spinner.finish_with_message(format!("Downloading {}...Done", &filename));
+    }
+    
     Ok(())
 }
 
