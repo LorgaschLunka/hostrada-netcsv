@@ -1,20 +1,21 @@
 use crate::{cli::{ConvertArgs}, converter::*};
 
 use log::{warn, debug};
+use owo_colors::OwoColorize;
 
 pub fn run(args: ConvertArgs) {
     match (args.file, args.dir) {
         (Some(file_path), None) => if args.all {
             // Get all values of one file 
             convert_all_values(vec![file_path.clone()], &args.output_dir, args.skip_nan).unwrap_or_else(|err| {
-                eprintln!("Failed to convert all values for {:?}: {err}", file_path);
+                eprintln!("{} {:?}{} {err}", "Failed to convert all values for".red().bold(), file_path, ":\n╰─▶".red().bold());
                 std::process::exit(1);
             });
 
         } else {
             // Get values of a defined pixel of one file
             convert_pixel(vec![file_path.clone()], args.x.unwrap(), args.y.unwrap(), &args.output_dir, args.merge).unwrap_or_else(|err| {
-                eprintln!("Failed to convert values of a pixel for {:?}: {err}", file_path);
+                eprintln!("{} {:?}{} {err}", "Failed to convert values for a pixel for".red().bold(), file_path, ":\n╰─▶".red().bold());
                 std::process::exit(1);
             });
         },
@@ -40,7 +41,7 @@ pub fn run(args: ConvertArgs) {
             let files = collect_paths(paths);
 
             convert_all_values(files, &args.output_dir, args.skip_nan).unwrap_or_else(|err| {
-                eprintln!("Failed to convert all values for directory {:?}: {err}", dir_path);
+                eprintln!("{} {:?}{} {err}", "Failed to convert all values for".red().bold(), dir_path, ":\n╰─▶".red().bold());
                 std::process::exit(1);
             });
 
@@ -66,7 +67,7 @@ pub fn run(args: ConvertArgs) {
             let files = collect_paths(paths);
 
             convert_pixel(files, args.x.unwrap(), args.y.unwrap(), &args.output_dir, args.merge).unwrap_or_else(|err| {
-                eprintln!("Failed to convert all values of a pixel for directory {:?}: {err}", dir_path);
+                eprintln!("{} {:?}{} {err}", "Failed to convert values for a pixel for".red().bold(), dir_path, ":\n╰─▶".red().bold());
                 std::process::exit(1);
             });
 
