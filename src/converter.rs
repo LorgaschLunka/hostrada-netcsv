@@ -93,6 +93,20 @@ pub fn convert_all_values(files: Vec<path::PathBuf>, output_dir: &path::PathBuf,
 pub fn convert_pixel(files: Vec<path::PathBuf>, x: usize, y: usize, output_dir: &path::PathBuf, merge: bool) -> anyhow::Result<()> {
     let spinner = green_spinner();
     let datasets = HostradaDataset::from_filelist_same_grids(files)?;
+
+    // validate pixel input 
+    let all_true = datasets
+        .iter()
+        .map(|set| set.contains_pixel(x, y))
+        .collect::<Result<Vec<bool>, _>>()?
+        .iter()
+        .all(|val| *val);
+
+    if !all_true {
+        return Err(anyhow::anyhow!(format!("Pixel ({}, {}) is not inside hostrada grid bounds", x, y)));
+    }
+
+
     spinner.finish();
     let mut mode = if merge {
         let var_id = datasets.first().unwrap().var_id().ok_or(anyhow::anyhow!("Did not found a var id for merged file"))?;

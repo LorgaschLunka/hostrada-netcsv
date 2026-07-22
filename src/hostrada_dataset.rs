@@ -182,6 +182,8 @@ impl HostradaDataset {
     }
 
     /// Check if given pixel x and y are inside the hostrada grid.
+    /// ## Errors
+    /// Propagates max_x and max_y errors: Error if there is no x variable in the file
     pub fn contains_pixel(&self, x: usize, y: usize) -> Result<bool, HostradaError> {
         if (0..=self.max_x()?).contains(&x) && (0..=self.max_y()?).contains(&y) {
             return Ok(true);
