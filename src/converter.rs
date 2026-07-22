@@ -143,7 +143,7 @@ fn convert_dataset(dataset: HostradaDataset, x: usize, y: usize, output_dir: &pa
     let pb = green_spinner();
     pb.set_message(format!("Converting pixel ({}/{}) {}...", x, y, path.display()));
 
-    let values = dataset.file().variable(&var_id).unwrap().get::<f32, _>((.., x, y)).unwrap();
+    let values = dataset.file().variable(&var_id).unwrap().get::<f32, _>((.., y, x)).unwrap();
     let timestamps = dataset.sorted_time();
 
     let scale_factor = dataset.scale_factor(&var_id);
