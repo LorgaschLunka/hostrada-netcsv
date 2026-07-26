@@ -75,7 +75,7 @@ pub fn run(args: ConvertArgs) {
 
         _ => unreachable!(),
     }
-    
+    println!("{}", "Finished".green().bold());
 }
 
 fn collect_paths<I>(iter: I) -> Vec<std::path::PathBuf>

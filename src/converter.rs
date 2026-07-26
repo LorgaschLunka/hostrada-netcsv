@@ -172,7 +172,7 @@ fn convert_dataset(dataset: HostradaDataset, x: usize, y: usize, output_dir: &pa
         pb.inc(1);
     }
 
-    pb.finish_with_message(format!("Done. ({:.02}s) {}", pb.elapsed().as_secs_f32(), path.display()));
+    pb.finish_with_message(format!("Needed {:.02}s for {}", pb.elapsed().as_secs_f32(), path.display()));
 
     Ok(())
 
