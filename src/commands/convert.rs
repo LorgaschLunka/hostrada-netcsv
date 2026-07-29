@@ -8,14 +8,14 @@ pub fn run(args: ConvertArgs) {
         (Some(file_path), None) => if args.all {
             // Get all values of one file 
             convert_all_values(vec![file_path.clone()], &args.output_dir, args.skip_nan).unwrap_or_else(|err| {
-                eprintln!("{} {:?}{} {err}", "Failed to convert all values for".red().bold(), file_path, ":\n╰─▶".red().bold());
+                eprintln!("{} {:?}{} {err:?}", "Failed to convert all values for".red().bold(), file_path, ":\n╰─▶".red().bold());
                 std::process::exit(1);
             });
 
         } else {
             // Get values of a defined pixel of one file
             convert_pixel(vec![file_path.clone()], args.x.unwrap(), args.y.unwrap(), &args.output_dir, args.merge).unwrap_or_else(|err| {
-                eprintln!("{} {:?}{} {err}", "Failed to convert values for a pixel for".red().bold(), file_path, ":\n╰─▶".red().bold());
+                eprintln!("{} {:?}{} {err:?}", "Failed to convert values for a pixel for".red().bold(), file_path, ":\n╰─▶".red().bold());
                 std::process::exit(1);
             });
         },
@@ -35,13 +35,13 @@ pub fn run(args: ConvertArgs) {
                 },
             }
             let paths = std::fs::read_dir(dir_path.clone()).unwrap_or_else(|err| {
-                eprintln!("Failed to read directory {:?}: {err}", dir_path);
+                eprintln!("Failed to read directory {:?}: {err:?}", dir_path);
                 std::process::exit(1);
             });
             let files = collect_paths(paths);
 
             convert_all_values(files, &args.output_dir, args.skip_nan).unwrap_or_else(|err| {
-                eprintln!("{} {:?}{} {err}", "Failed to convert all values for".red().bold(), dir_path, ":\n╰─▶".red().bold());
+                eprintln!("{} {:?}{} {err:?}", "Failed to convert all values for".red().bold(), dir_path, ":\n╰─▶".red().bold());
                 std::process::exit(1);
             });
 
@@ -56,18 +56,18 @@ pub fn run(args: ConvertArgs) {
                     }
                 },
                 Err(e) => {
-                    warn!("Error validating local files matching hostrada server files: {}", e);
+                    warn!("Error validating local files matching hostrada server files: {e:?}");
                     std::process::exit(1);
                 },
             }
             let paths = std::fs::read_dir(dir_path.clone()).unwrap_or_else(|err| {
-                eprintln!("Failed to read directory {:?}: {err}", dir_path);
+                eprintln!("Failed to read directory {:?}: {err:?}", dir_path);
                 std::process::exit(1);
             });
             let files = collect_paths(paths);
 
             convert_pixel(files, args.x.unwrap(), args.y.unwrap(), &args.output_dir, args.merge).unwrap_or_else(|err| {
-                eprintln!("{} {:?}{} {err}", "Failed to convert values for a pixel for".red().bold(), dir_path, ":\n╰─▶".red().bold());
+                eprintln!("{} {:?}{} {err:?}", "Failed to convert values for a pixel for".red().bold(), dir_path, ":\n╰─▶".red().bold());
                 std::process::exit(1);
             });
 
@@ -88,7 +88,7 @@ where
             Some(entry.path())
         }
         Err(e) => {
-            warn!("Skipping file: {e}");
+            warn!("Skipping file: {e:?}");
             None
         }
     })
