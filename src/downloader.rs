@@ -6,7 +6,7 @@ use crate::{
 };
 
 /// Handles the download of exaktly one file identified by variable and date, using the supplied client
-pub fn download_file(variable: &HostradaVar, date: YearMonth, install_dir: &path::PathBuf, client: &reqwest::blocking::Client) -> anyhow::Result<()> {
+pub fn download_file(variable: &HostradaVar, date: YearMonth, mut install_dir: path::PathBuf, client: &reqwest::blocking::Client) -> anyhow::Result<()> {
     let spinner = green_spinner();
 
     let mut download_link = variable.link()
@@ -29,11 +29,10 @@ pub fn download_file(variable: &HostradaVar, date: YearMonth, install_dir: &path
         spinner.set_message(format!("Downloading {} (Unknown)...", &filename));
         None
     };
+
+    install_dir.push(&filename);
     
-    let mut inner_install_dir = install_dir.clone();
-    inner_install_dir.push(&filename);
-    
-    let mut active_file = ActiveFile::new(inner_install_dir);
+    let mut active_file = ActiveFile::new(install_dir);
     let mut file = fs::File::create(&active_file.path)
         .with_context(|| format!("Could not create file {}", active_file.path.display()))?;
 
