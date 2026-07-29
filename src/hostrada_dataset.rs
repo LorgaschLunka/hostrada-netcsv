@@ -170,7 +170,7 @@ impl HostradaDataset {
     }
 
     /// Check if given latitude and longitude is inside the hostrada grid.
-    /// Calculates nearest pixel (with the fast function) and if the distance is > 500m, the requested coord is not contained
+    /// Calculates nearest pixel (with the fast function) and if the distance is > 707.2m (sqrt(500²+500²)), the requested coord is not contained
     /// Also returns distance to nearest pixel.
     pub fn contains_coord(&self, lat: f64, lon: f64) -> WithDistance<bool> {
         let ret = self.nearest_pixel_at_coord_approx(lat, lon);
@@ -264,7 +264,6 @@ impl HostradaDataset {
         let mut min_dist: ((u16, u16), f64) = ((100, 100), 1000000.0); // arbitrary values to ensure that the first shadow is swapping the values 
         for x in base_x as u16..=(base_x+max_x) as u16 {
             for y in base_y as u16..=(base_y+max_y) as u16{
-
                 let pixel = self.pixel_at(x, y).unwrap();
                 let d = haversine((pixel.lat, pixel.lon), (lat, lon), 6371000.0);
 

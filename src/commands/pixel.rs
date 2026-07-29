@@ -10,12 +10,14 @@ pub fn run(args: PixelArgs) {
     match pixel(args.ref_file, args.lat, args.lon) {
         Ok(pix) => {
             spinner.finish();
-            println!("{}The nearest pixel to coordinates {}, {} is pixel ({}, {}). Estimated distance to pixel center: {:.2}m.",
+            println!("{}The nearest pixel to coordinates {}, {} is pixel ({}, {}) with center coordinates {:.03}, {:.03}. Estimated distance to pixel center: {:.2}m.",
                 "Found a pixel! :D\n".green().bold(),
                 args.lat,
                 args.lon,
                 pix.value.x,
                 pix.value.y,
+                pix.value.lat,
+                pix.value.lon,
                 pix.distance
             )
         },

@@ -1,3 +1,32 @@
+// calculate test coords and their distances
+    // let dataset = crate::hostrada_dataset::HostradaDataset::new("./data/input/clt_1hr_HOSTRADA-v1-0_BE_gn_2020010100-2020013123.nc").unwrap();
+    // use rand::RngExt;
+    // // idea: create lots of random lats and lons and check the nearest pixel; collect distances and print largest
+    // let mut rng = rand::rng();
+    // let amount = 1_000_000;
+    // println!("Creating {} random coords...", amount);
+    // let coords: Vec<(f64, f64)> = (0..amount)
+    //     .map(|_| (rng.random_range(47.5..50.8), rng.random_range(8.2..9.2)))
+    //     .collect();
+
+    // println!("Calculating distances...");
+
+    // let mut dists: Vec<f64> = coords
+    //     .par_iter()
+    //     .map(|(lat, lon)| dataset.contains_coord(*lat, *lon).distance)
+    //     .collect();
+
+    // println!("Sorting...");
+
+    // dists.sort_by(|a, b| b.total_cmp(a));
+
+    // for num in &dists[0..10] {
+    //     println!("{}", num);
+    // }
+
+    // std::process::exit(1);
+
+
 // fn plot_data(data: Vec<(DateTime<Utc>, f64)>) {
 
 //     let root = BitMapBackend::new("chart.png", (1280, 720)).into_drawing_area();
