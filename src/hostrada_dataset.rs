@@ -175,7 +175,7 @@ impl HostradaDataset {
     pub fn contains_coord(&self, lat: f64, lon: f64) -> WithDistance<bool> {
         let ret = self.nearest_pixel_at_coord_approx(lat, lon);
         let dist = ret.distance;
-        if dist > 500.0 {
+        if dist > 1000.0 {
             return WithDistance { value: false, distance: dist };
         }
         WithDistance { value: true, distance: dist}

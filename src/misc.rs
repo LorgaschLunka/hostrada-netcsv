@@ -24,6 +24,7 @@ where
 }
 
 /// Struct for every return type that contains a distance for extra information
+#[derive(Debug, Clone)]
 pub struct WithDistance<T> {
     pub value: T,
     pub distance: f64,
