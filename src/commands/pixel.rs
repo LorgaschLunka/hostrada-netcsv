@@ -23,7 +23,7 @@ pub fn run(args: PixelArgs) {
         },
         Err(e) => {
             spinner.finish();
-            eprintln!("{} {e:?}", "Error calculating nearest pixel:\n╰─▶".red().bold())
+            eprintln!("{} {e}", "Error calculating nearest pixel:\n╰─▶".red().bold())
         },
     }
 }
