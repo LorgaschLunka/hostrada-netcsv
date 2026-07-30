@@ -1,14 +1,12 @@
-use std::{fs, io, path};
+use std::{fs, io::{Read, Write}, path};
 use anyhow::Context;
-use log::warn;
+use env_logger::init;
 use crate::{
-    dates_and_times::YearMonth, hostrada_variable::HostradaVar, misc::green_spinner,
+    dates_and_times::YearMonth, hostrada_variable::HostradaVar,
 };
 
 /// Handles the download of exaktly one file identified by variable and date, using the supplied client
 pub fn download_file(variable: &HostradaVar, date: YearMonth, mut install_dir: path::PathBuf, client: &reqwest::blocking::Client) -> anyhow::Result<()> {
-    let spinner = green_spinner();
-
     let mut download_link = variable.link()
         .with_context(|| format!("Failed to extract download link for variable {variable}"))?;
 
@@ -21,15 +19,8 @@ pub fn download_file(variable: &HostradaVar, date: YearMonth, mut install_dir: p
         .send()?
         .error_for_status()?;
 
-    let size = if let Some(size) = response.content_length() {
-        spinner.set_message(format!("Downloading {} ({:.02}mb)...", &filename, (size as f64/1000000.0)));
-        Some(size)
-    } else {
-        warn!("Unable to get filesize. This could be a sign, that the file is corrupted. Could also be fine.");
-        spinner.set_message(format!("Downloading {} (Unknown)...", &filename));
-        None
-    };
-
+    let size = response.content_length().ok_or(anyhow::anyhow!("No filesize in requested online file."))?;
+      
     install_dir.push(&filename);
     
     let mut active_file = ActiveFile::new(install_dir);
@@ -37,21 +28,51 @@ pub fn download_file(variable: &HostradaVar, date: YearMonth, mut install_dir: p
         .with_context(|| format!("Could not create file {}", active_file.path.display()))?;
 
     let start_download = std::time::Instant::now();
-    io::copy(&mut response, &mut file)
-        .with_context(|| format!("while streaming to {}. Could be a network error", active_file.path.display()))?;
+    // io::copy but as a self written loop with specified chunk sizes
+    const BUF_SIZE: usize = 1024 * 64;
+    let mut download_buffer= [0u8; BUF_SIZE]; // 64 kb to write to buffer
+    let mut total_written = 0;
+    let pb = download_pb(size);
+    let init_msg = format!("Downloading {} ({:.02}mb)...", &filename, (size as f64/1000000.0));
+    pb.set_message(init_msg.clone());
+
+    loop {
+        let bytes = response.read(&mut download_buffer).with_context(|| format!("while streaming to {}. Could be a network error", active_file.path.display()))?;
+    
+        if bytes == 0 {
+            // break if response is empty
+            break
+        }
+
+        // write all bytes that have been returned from response.read
+        file.write_all(&download_buffer[..bytes])?;
+
+        total_written += bytes;
+        pb.set_message(format!("{} [{:.02} mb]", init_msg, total_written as f32/1_000_000.0));
+        pb.inc(bytes as u64);
+    }
+
     let download_elapsed = start_download.elapsed().as_secs_f32();
 
     active_file.complete();
 
-    if let Some(size) = size {
-        spinner.finish_with_message(format!("Downloading {}...Done ({:.02} mb/s)", &filename, (size as f32/download_elapsed)/1000000.0));
-    } else {
-        spinner.finish_with_message(format!("Downloading {}...Done", &filename));
-    }
+    pb.finish_with_message(format!("Downloading {}...Done ({:.01} mb/s)", &filename, (size as f32/download_elapsed)/1000000.0));
     
     Ok(())
 }
 
+
+// Local helper to create pb with an empty message
+fn download_pb(len: u64) -> indicatif::ProgressBar {
+    let pb = indicatif::ProgressBar::new(len);
+    pb.set_style(
+        indicatif::ProgressStyle::with_template("{spinner:.green} {msg} [{bar:40.green}]").unwrap()
+        .progress_chars("->O")
+    );
+    pb.enable_steady_tick(std::time::Duration::from_millis(70));
+
+    pb
+}
 
 /// Little helper struct for the file that is currently written to. Implements drop to be dropped if anything goes wrong without the file being completed.
 struct ActiveFile {

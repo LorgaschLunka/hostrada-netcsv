@@ -8,14 +8,14 @@ pub fn run(args: ConvertArgs) {
         (Some(file_path), None) => if args.all {
             // Get all values of one file 
             convert_all_values(vec![file_path.clone()], &args.output_dir, args.skip_nan).unwrap_or_else(|err| {
-                eprintln!("{} {:?}{} {err:?}", "Failed to convert all values for".red().bold(), file_path, ":\n╰─▶".red().bold());
+                eprintln!("{} {:?}:{} {err:?}", "Failed to convert all values for".red().bold(), file_path, "\n╰─▶".red().bold());
                 std::process::exit(1);
             });
 
         } else {
             // Get values of a defined pixel of one file
             convert_pixel(vec![file_path.clone()], args.x.unwrap(), args.y.unwrap(), &args.output_dir, args.merge).unwrap_or_else(|err| {
-                eprintln!("{} {:?}{} {err:?}", "Failed to convert values for a pixel for".red().bold(), file_path, ":\n╰─▶".red().bold());
+                eprintln!("{} {:?}:{} {err:?}", "Failed to convert values for a pixel for".red().bold(), file_path, "\n╰─▶".red().bold());
                 std::process::exit(1);
             });
         },
@@ -30,7 +30,7 @@ pub fn run(args: ConvertArgs) {
                     }
                 },
                 Err(e) => {
-                    warn!("Error validating local files matching hostrada server files: {}", e);
+                    eprintln!("{} while matching local file sizes with hostrada server files:{}{:?}", "Error".red().bold(), "\n╰─▶".red().bold(), e);
                     std::process::exit(1);
                 },
             }
@@ -41,7 +41,7 @@ pub fn run(args: ConvertArgs) {
             let files = collect_paths(paths);
 
             convert_all_values(files, &args.output_dir, args.skip_nan).unwrap_or_else(|err| {
-                eprintln!("{} {:?}{} {err:?}", "Failed to convert all values for".red().bold(), dir_path, ":\n╰─▶".red().bold());
+                eprintln!("{} {:?}{} {err:?}", "Failed to convert all values for".red().bold(), dir_path, ":\n╰─▶ ".red().bold());
                 std::process::exit(1);
             });
 
@@ -56,7 +56,7 @@ pub fn run(args: ConvertArgs) {
                     }
                 },
                 Err(e) => {
-                    warn!("Error validating local files matching hostrada server files: {e:?}");
+                    eprintln!("{} while matching local file sizes with hostrada server files:{}{:?}", "Error".red().bold(), "\n╰─▶ ".red().bold(), e);
                     std::process::exit(1);
                 },
             }
