@@ -136,7 +136,7 @@ Supported variables include:
 * air-temperature-mean
 * cloud-cover
 * dew-point
-* humidity-mixing-ration
+* humidity-mixing-ratio
 * humidity-relative
 * pressure-sealevel
 * pressure-surface
@@ -145,14 +145,16 @@ Supported variables include:
 * wind-direction
 * wind-speed
 
+**Important**: Different variables seem to have different origins (see configuration). The origin for each variable as of 2026-08 is provided in the brackets above. When converting, set the respective origin in the config file. (THIS WILL MOST LIKELY BE CHANGED IN THE FUTURE. IT WOULD BE MUCH NICER IF THE PROGRAM DID THIS FOR YOU.)
+
 ---
 
 ## Configuration
 
-There is a config file in $HOME/.config/hostrada-netcsv. The only reason to change the file currently is if any of the following changes (which is unlikely):
-1. The base link of the HOSTRADA data.
+There is a config file in $HOME/.config/hostrada-netcsv. The only reason to change the file currently is if any of the following changes:
+1. The base link of the HOSTRADA data (unlikely).
 2. The origin of the timestamp of the data (timestamps are included with unit "days-since <ORIGIN>"; if the origin did change, the timestamps in the resulting CSV files would be offset).
-
+   
 ---
 
 ## Notes
