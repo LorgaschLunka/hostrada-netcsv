@@ -24,6 +24,14 @@ Throughout this project, these grid cells are referred to as **pixels**. Each pi
 
 ## Installation
 
+Download and run install.sh:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/LorgaschLunka/hostrada-netcsv/main/install.sh | bash
+```
+
+This will download the latest bin to /usr/bin and make it executable.
+
 ### Prerequisites
 
 This project depends on the native **NetCDF C library**. See build/dependencies of https://github.com/georust/netcdf.
