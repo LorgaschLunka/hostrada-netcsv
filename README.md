@@ -84,8 +84,8 @@ Useful options:
 
 | Option       | Description                                                                                                                                               |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--all`      | Convert every pixel. Produces very large output (potentially >10 GB).                                                                                 |
-| `--skip-nan` | While converting every pixel, skip invalid HOSTRADA values (`-9999`) to significantly reduce output size.                                             |
+| `--all`      | Convert every pixel. Produces very large output (potentially >10 GB).                                                                                     |
+| `--skip-nan` | While converting every pixel, skip invalid HOSTRADA values (`-9999`) to significantly reduce output size.                                                 |
 | `--merge`    | Merge multiple converted files into a single CSV. Only supported for single-pixel conversions. Input directory should contain files of one variable only. |
 
 ---
