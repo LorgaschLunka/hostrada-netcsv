@@ -1,4 +1,4 @@
-*Transparency notice: Written by AI and checked for correctness.*
+*Transparency notice: This readme was written by AI and checked for correctness.*
 
 # hostrada-netcsv
 
@@ -23,6 +23,14 @@ Throughout this project, these grid cells are referred to as **pixels**. Each pi
 ---
 
 ## Installation
+
+Download and run install.sh:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/LorgaschLunka/hostrada-netcsv/main/install.sh | sudo bash
+```
+
+This is just a convenient shortcut to download the latest bin to /usr/bin and make it executable. This means, that to uninstall, you just have to delete the binary in /usr/bin, and the config in $HOME/.config/hostrada-netcsv.
 
 ### Prerequisites
 
@@ -76,9 +84,9 @@ Useful options:
 
 | Option       | Description                                                                                                                                               |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--all`      | Convert every grid cell. Produces very large output (potentially >10 GB).                                                                                 |
-| `--skip-nan` | While converting every grid cell, skip invalid HOSTRADA values (`-9999`) to significantly reduce output size.                                             |
-| `--merge`    | Merge multiple converted files into a single CSV. Only supported for single-pixel conversions. Input directory should contain files of one variable only. |
+| `--all`      | Convert every pixel. Produces very large output (potentially >10 GB).                                                                                     |
+| `--skip-nan` | While converting every pixel, skip invalid HOSTRADA values (`-9999`) to significantly reduce output size.                                                 |
+| `--merge`    | When converting a directory, merge multiple converted files into a single CSV. Only supported for single-pixel conversions. Input directory should contain files of one variable only. |
 
 ---
 
@@ -139,11 +147,20 @@ Supported variables include:
 
 ---
 
+## Configuration
+
+There is a config file in $HOME/.config/hostrada-netcsv. The only reason to change the file currently is if any of the following changes (which is unlikely):
+1. The base link of the HOSTRADA data.
+2. The origin of the timestamp of the data (timestamps are included with unit "days-since <ORIGIN>"; if the origin did change, the timestamps in the resulting CSV files would be offset).
+
+---
+
 ## Notes
 
 * **Do not rename downloaded HOSTRADA files.** The converter relies on the original filenames.
 * Invalid values in the HOSTRADA dataset are represented by `-9999`.
 * Converting the full grid creates one output file per hourly timestep and may require substantial disk space.
+* It is recommended to check expected values and units. For example, when converting cloud-cover data, one would expect eights (1.00-8.00). If something went wrong (e.g. different variables in a directory in merge mode), values like 10.83 could occur.
 
 ---
 
@@ -155,5 +172,5 @@ Conversion takes some time. Expect 2-10s per file when converting a single pixel
 
 ## License
 
-See the repository license for details.
+MIT License. See the repository license for details.
 
