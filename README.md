@@ -30,7 +30,7 @@ Download and run install.sh:
 curl -fsSL https://raw.githubusercontent.com/LorgaschLunka/hostrada-netcsv/main/install.sh | sudo bash
 ```
 
-This will download the latest bin to /usr/bin and make it executable.
+This is just a convenient shortcut to download the latest bin to /usr/bin and make it executable. This means, that to uninstall, you just have to delete the binary in /usr/bin, and the config in $HOME/.config/hostrada-netcsv.
 
 ### Prerequisites
 
@@ -144,6 +144,14 @@ Supported variables include:
 * urban-heat-island-intensity
 * wind-direction
 * wind-speed
+
+---
+
+## Configuration
+
+There is a config file in $HOME/.config/hostrada-netcsv. The only reason to change the file currently is if any of the following changes (which is unlikely):
+1. The base link of the HOSTRADA data.
+2. The origin of the timestamp of the data (timestamps are included with unit "days-since <ORIGIN>"; if the origin did change, the timestamps in the resulting CSV files would be offset).
 
 ---
 
