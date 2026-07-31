@@ -27,7 +27,7 @@ Throughout this project, these grid cells are referred to as **pixels**. Each pi
 Download and run install.sh:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/LorgaschLunka/hostrada-netcsv/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/LorgaschLunka/hostrada-netcsv/main/install.sh | sudo sh
 ```
 
 This is just a convenient shortcut to download the latest bin to /usr/bin and make it executable. This means, that to uninstall, you just have to delete the binary in /usr/bin, and the config in $HOME/.config/hostrada-netcsv.
