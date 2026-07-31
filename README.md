@@ -163,5 +163,5 @@ Conversion takes some time. Expect 2-10s per file when converting a single pixel
 
 ## License
 
-See the repository license for details.
+MIT License. See the repository license for details.
 
