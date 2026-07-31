@@ -7,7 +7,7 @@ pub enum HostradaVar {
     AirTemperatureMean, // tas
     CloudCover, // clt
     DewPoint, // tdew
-    HumidityMixingRation, // mixr
+    HumidityMixingRatio, // mixr
     HumidityRelative, // hurs
     PressureSealevel, // psl
     PressureSurface, // ps
@@ -24,7 +24,7 @@ impl HostradaVar {
             HostradaVar::AirTemperatureMean => "tas",
             HostradaVar::CloudCover => "clt",
             HostradaVar::DewPoint => "tdew",
-            HostradaVar::HumidityMixingRation => "mixr",
+            HostradaVar::HumidityMixingRatio => "mixr",
             HostradaVar::HumidityRelative => "hurs",
             HostradaVar::PressureSealevel => "psl",
             HostradaVar::PressureSurface => "ps",
@@ -41,7 +41,7 @@ impl HostradaVar {
             "tas" => Some(HostradaVar::AirTemperatureMean),
             "clt" => Some(HostradaVar::CloudCover),
             "tdew" => Some(HostradaVar::DewPoint),
-            "mixr" => Some(HostradaVar::HumidityMixingRation),
+            "mixr" => Some(HostradaVar::HumidityMixingRatio),
             "hurs" => Some(HostradaVar::HumidityRelative),
             "psl" => Some(HostradaVar::PressureSealevel),
             "ps" => Some(HostradaVar::PressureSurface),
@@ -64,7 +64,7 @@ impl HostradaVar {
             HostradaVar::AirTemperatureMean => "air_temperature_mean",
             HostradaVar::CloudCover => "cloud_cover",
             HostradaVar::DewPoint => "dew_point",
-            HostradaVar::HumidityMixingRation => "humidity_mixing_ratio",
+            HostradaVar::HumidityMixingRatio => "humidity_mixing_ratio",
             HostradaVar::HumidityRelative => "humidity_relative",
             HostradaVar::PressureSealevel => "pressure_sealevel",
             HostradaVar::PressureSurface => "pressure_surface",
@@ -87,7 +87,7 @@ impl std::fmt::Display for HostradaVar {
             HostradaVar::AirTemperatureMean => "air_temperature_mean",
             HostradaVar::CloudCover => "cloud_cover",
             HostradaVar::DewPoint => "dew_point",
-            HostradaVar::HumidityMixingRation => "humidity_mixing_ratio",
+            HostradaVar::HumidityMixingRatio => "humidity_mixing_ratio",
             HostradaVar::HumidityRelative => "humidity_relative",
             HostradaVar::PressureSealevel => "pressure_sealevel",
             HostradaVar::PressureSurface => "pressure_surface",

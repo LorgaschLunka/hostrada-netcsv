@@ -15,6 +15,7 @@ use crate::{
 };
 
 #[derive(Parser, Debug)]
+#[command(version)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
