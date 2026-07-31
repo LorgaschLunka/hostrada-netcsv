@@ -136,16 +136,16 @@ Supported variables include:
 * air-temperature-mean
 * cloud-cover
 * dew-point
-* humidity-mixing-ratio
 * humidity-relative
 * pressure-sealevel
 * pressure-surface
 * radiation-downwelling
-* urban-heat-island-intensity
 * wind-direction
 * wind-speed
 
-**Important**: Different variables seem to have different origins (see configuration). The origin for each variable as of 2026-08 is provided in the brackets above. When converting, set the respective origin in the config file. (THIS WILL MOST LIKELY BE CHANGED IN THE FUTURE. IT WOULD BE MUCH NICER IF THE PROGRAM DID THIS FOR YOU.)
+WORK IN PROGRESS, CURRENTLY PRODUCE UNPREDICTABLE DATA:
+* urban-heat-island-intensity
+* humidity-mixing-ratio
 
 ---
 
