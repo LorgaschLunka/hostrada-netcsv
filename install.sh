@@ -3,11 +3,12 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-if ! pkg-config --exists netcdf; then
-   echo "WARNING netcdf NOT FOUND"
-   echo "Install first with"
-   echo "   Arch: sudo pacman -S netcdf"
-fi
+# MYB LATER: Check if netcdf system libraries are installed
+#if ! pkg-config --exists netcdf; then
+#   echo "WARNING netcdf NOT FOUND"
+#   echo "Install first with"
+#   echo "   Arch: sudo pacman -S netcdf"
+#fi
 
 workdir=$(pwd)
 
@@ -20,6 +21,3 @@ sudo curl -sSL -o "$target_bin_dir/hostrada-netcsv" $latest_web_url
 
 echo "Adding execute permissions for binary"
 sudo chmod +x $target_bin_dir/hostrada-netcsv
-
-echo "Done"
-
