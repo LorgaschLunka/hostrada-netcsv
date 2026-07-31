@@ -1,4 +1,4 @@
-*AI notice: This readme was written by AI and checked for correctness.*
+*AI notice: This readme was written by ChatGPT and checked for correctness.*
 
 # hostrada-netcsv
 
