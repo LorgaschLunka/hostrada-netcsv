@@ -160,6 +160,7 @@ There is a config file in $HOME/.config/hostrada-netcsv. The only reason to chan
 * **Do not rename downloaded HOSTRADA files.** The converter relies on the original filenames.
 * Invalid values in the HOSTRADA dataset are represented by `-9999`.
 * Converting the full grid creates one output file per hourly timestep and may require substantial disk space.
+* It is recommended to check expected values and units. For example, when converting cloud-cover data, one would expect eights (1.00-8.00). If something went wrong (e.g. different variables in a directory in merge mode), values like 10.83 could occur.
 
 ---
 
