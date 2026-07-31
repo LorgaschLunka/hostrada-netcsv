@@ -14,8 +14,8 @@ pub fn run(args: PixelArgs) {
                 "Found a pixel! :D\n".green().bold(),
                 args.lat,
                 args.lon,
-                pix.value.x,
-                pix.value.y,
+                pix.value.x.green().bold(),
+                pix.value.y.green().bold(),
                 pix.value.lat,
                 pix.value.lon,
                 pix.distance
