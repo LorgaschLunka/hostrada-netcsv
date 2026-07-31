@@ -14,8 +14,6 @@ use crate::{
     dates_and_times::YearMonth,
 };
 
-/// convert: Take a file or directory and convert all hostrada netcdf files found to a csv file
-/// pixel: calculate x and y of the pixel containing the requested coordinates, using a reference file
 #[derive(Parser, Debug)]
 pub struct Cli {
     #[command(subcommand)]
@@ -123,6 +121,7 @@ impl Cli {
     }
 }
 
+/// Take a file or directory and convert it to a csv file
 #[derive(Args, Debug)]
 #[command(group(
     ArgGroup::new("mode")
@@ -130,7 +129,7 @@ impl Cli {
         .args(["file", "dir"]) // bezieht sich auf die Namen der fields
 ))]
 pub struct ConvertArgs {
-    /// convert full hostrada grid (CAUTION: May take a long time, will produce really large data (up to >10 GB). It is highly suggested to select pixels of interest and only convert data for those pixels)
+    /// convert full hostrada grid (CAUTION: May take a long time, will produce really large data (up to >10 GB).
     #[arg(short, long, conflicts_with = "merge")]
     pub all: bool,
 
@@ -163,6 +162,7 @@ pub struct ConvertArgs {
     pub y: Option<usize>,
 }
 
+/// Get the respective hostrada grid pixel of some coordinates in Decimal Degrees
 #[derive(Args, Debug)]
 pub struct PixelArgs {
     /// hostrada netcdf file to reference while searching for pixel
@@ -175,6 +175,7 @@ pub struct PixelArgs {
     pub lon: f64,
 }
 
+/// Download netcdf files from https://opendata.dwd.de/climate_environment/CDC/grids_germany/hourly/hostrada/ (if this link changes in the future, it can be changed in config)
 #[derive(Args, Debug)]
 pub struct DownloadArgs {
     /// variable to download
@@ -183,13 +184,14 @@ pub struct DownloadArgs {
     /// inclusive: first month to download (format YYYY-MM)
     pub start_month: YearMonth, 
 
-    /// exclusive: last month to download (format YYYY-MM)
+    /// exclusive: month up to which to download (format YYYY-MM)
     pub end_month: YearMonth,
 
     /// directory to install to
     pub install_dir: std::path::PathBuf,
 }
 
+/// For config
 #[derive(Args, Debug)]
 pub struct OriginArgs {
     /// File to read in and get origin from (= timestamp used as a base to depict time (days-since) in hostrada netcdf files)
