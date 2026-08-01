@@ -27,7 +27,7 @@ Throughout this project, these grid cells are referred to as **pixels**. Each pi
 Download and run install.sh:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/LorgaschLunka/hostrada-netcsv/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/LorgaschLunka/hostrada-netcsv/main/install.sh | sudo sh
 ```
 
 This is just a convenient shortcut to download the latest bin to /usr/bin and make it executable. This means, that to uninstall, you just have to delete the binary in /usr/bin, and the config in $HOME/.config/hostrada-netcsv.
@@ -136,23 +136,25 @@ Supported variables include:
 * air-temperature-mean
 * cloud-cover
 * dew-point
-* humidity-mixing-ration
 * humidity-relative
 * pressure-sealevel
 * pressure-surface
 * radiation-downwelling
-* urban-heat-island-intensity
 * wind-direction
 * wind-speed
+
+WORK IN PROGRESS, CURRENTLY PRODUCE UNPREDICTABLE DATA:
+* urban-heat-island-intensity
+* humidity-mixing-ratio
 
 ---
 
 ## Configuration
 
-There is a config file in $HOME/.config/hostrada-netcsv. The only reason to change the file currently is if any of the following changes (which is unlikely):
-1. The base link of the HOSTRADA data.
+There is a config file in $HOME/.config/hostrada-netcsv. The only reason to change the file currently is if any of the following changes:
+1. The base link of the HOSTRADA data (unlikely).
 2. The origin of the timestamp of the data (timestamps are included with unit "days-since <ORIGIN>"; if the origin did change, the timestamps in the resulting CSV files would be offset).
-
+   
 ---
 
 ## Notes
