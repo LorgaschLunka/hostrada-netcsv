@@ -17,7 +17,7 @@ use owo_colors::OwoColorize;
 
 use crate::{
     cli::{Cli, Commands},
-    commands::{convert, download, origin, pixel},
+    commands::{convert, download, time_unit, pixel},
     config::Config,
 };
 
@@ -43,7 +43,7 @@ fn main() {
         Commands::Convert(args) => convert::run(args),
         Commands::Pixel(args) => pixel::run(args),
         Commands::Download(args) => download::run(args),
-        Commands::Origin(args) => origin::run(args),
+        Commands::TimeUnit(args) => time_unit::run(args),
     }
 
 }

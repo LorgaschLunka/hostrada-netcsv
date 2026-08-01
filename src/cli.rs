@@ -26,7 +26,7 @@ pub enum Commands {
     Convert(ConvertArgs),
     Pixel(PixelArgs),
     Download(DownloadArgs),
-    Origin(OriginArgs),
+    TimeUnit(TimeUnitArgs),
 }
 
 impl Cli {
@@ -36,7 +36,7 @@ impl Cli {
             Commands::Convert(args) => Cli::validate_convert(args),
             Commands::Pixel(args) => Cli::validate_pixel(args),
             Commands::Download(args) => Cli::validate_download(args),
-            Commands::Origin(args) => Cli::validate_origin(args),
+            Commands::TimeUnit(args) => Cli::validate_time_unit(args),
         }
     }
 
@@ -97,8 +97,8 @@ impl Cli {
     /// Validates origin command input.
     /// ## Errors
     /// - if the file to get the origin from is not a valid netcdf file
-    fn validate_origin(args: &OriginArgs) -> anyhow::Result<()> {
-        ensure!(args.file_path.is_file(), "Invalid file to get origin from: {}", args.file_path.display());
+    fn validate_time_unit(args: &TimeUnitArgs) -> anyhow::Result<()> {
+        ensure!(args.file_path.is_file(), "Invalid file to get time unit from: {}", args.file_path.display());
 
         ensure!(
             args.file_path.extension().and_then(|v| v.to_str()) == Some("nc"),
@@ -195,7 +195,7 @@ pub struct DownloadArgs {
 
 /// For config
 #[derive(Args, Debug)]
-pub struct OriginArgs {
-    /// File to read in and get origin from (= timestamp used as a base to depict time (days-since) in hostrada netcdf files)
+pub struct TimeUnitArgs {
+    /// File to read in and get time unit from (e.g. "days since 1949-12-01T00:00:00+00:00")
     pub file_path: std::path::PathBuf,
 }

@@ -1,6 +1,5 @@
 use std::{fs, io::{Read, Write}, path};
 use anyhow::Context;
-use env_logger::init;
 use crate::{
     dates_and_times::YearMonth, hostrada_variable::HostradaVar,
 };

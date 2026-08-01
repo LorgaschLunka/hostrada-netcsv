@@ -138,20 +138,25 @@ pub fn readable_dur(duration: std::time::Duration) -> String {
     format!("{}h {}m {}s", total_hours, final_mins, final_secs)
 }
 
-/// time unit of the file without building a whole HostradaDataset object
-pub fn fast_origin(ref_file: path::PathBuf) -> Result<String, Box<dyn std::error::Error>> {
-
+/// time unit of the netCDF file without building a whole HostradaDataset object
+/// ## Errors
+/// - netcdf::open returns any error (e.g. IO)
+/// - variable 'time' is not found
+/// - attribute 'units' is not found
+/// - attribute value is not represented as a Str in netcdf crate (see AttributeValue enum Str field)
+pub fn fast_time_unit(ref_file: path::PathBuf) -> anyhow::Result<String> {
     let file = netcdf::open(ref_file)?;
-    
+
     let attr_val = file
         .variable("time")
-        .ok_or("Could not get time variable")?
+        .ok_or(anyhow::anyhow!("Could not get time variable"))?
         .attribute("units")
-        .ok_or("Time variable does not have a units attribute")?
+        .ok_or(anyhow::anyhow!("Time variable does not have a units attribute"))?
         .value()?;
 
     if let AttributeValue::Str(value) = attr_val {
-        return Ok(value.split_whitespace().last().ok_or("time unit does not match the expected format")?.to_owned());
+        return Ok(value);
     }
-    Err("Failed to get origin".into())
+
+    Err(anyhow::anyhow!("Attribute value is not represented as AttributeValue::Str"))
 }
