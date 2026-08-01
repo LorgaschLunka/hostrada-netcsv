@@ -7,7 +7,7 @@ use crate::{cli::TimeUnitArgs,
 
 
 pub fn run(args: TimeUnitArgs) {
-    match fast_time_unit(args.file_path) {
+    match fast_time_unit(&args.file_path) {
         Ok(v) => println!("{v}"),
         Err(e) => {
             eprintln!("{} {e:?}", "Failed to get time unit:\n╰─▶".red().bold());

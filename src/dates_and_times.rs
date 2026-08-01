@@ -4,12 +4,13 @@ use std::{
     path,
 };
 
+use anyhow::Context;
 use netcdf::AttributeValue;
 use chrono::{
     DateTime,
     Utc,
     Duration,
-    ParseError,
+    NaiveDate,
 };
 
 
@@ -105,18 +106,40 @@ pub fn is_leap_year(year: u32) -> bool {
     (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
 }
 
-/// Parses a days since rfc3339-origin input to a DateTime<Utc> object
-pub fn parse_time(since: &str, days: f64) -> Result<DateTime<Utc>, ParseError> {
-    let origin = DateTime::parse_from_rfc3339(since)?.with_timezone(&Utc);
+/// Parses any time value with its time units str extracted from the netCDF files (e.g. "hours since 1995-01-01") to a DateTime<Utc> object
+pub fn parse_time(time_unit: &str, value: f64) -> anyhow::Result<DateTime<Utc>> {
+    let (unit, origin) = time_unit.split_once(" since ").ok_or(anyhow::anyhow!("Invalid time unit format"))?;
 
-    let datetime = origin + Duration::seconds((days * 86400.0) as i64);
+    let origin = if let Ok(valid_origin) = DateTime::parse_from_rfc3339(origin) {
+        // origin is in format 1949-12-01T00:00:00+00:00
+        valid_origin.with_timezone(&Utc)
+    } else {
+        // try if origin is in format 1949-12-01
+        let date = NaiveDate::parse_from_str(origin, "%Y-%m-%d")
+            .with_context(|| format!("{} is not a valid time format. If this error occurs with regular HOSTRADA netCDF files, please inform developer", origin))?
+            .and_hms_opt(0, 0, 0).unwrap();
+        
+        DateTime::from_naive_utc_and_offset(date, Utc)  
+    };
+
+    // convert every value to seconds and add seconds as offset to origin -> only precise to seconds, not smaller
+    // needed, because HOSTRADA times contain floats (e.g. cannot pass hours directly to Duration::hours)
+    let offset = match unit {
+        "seconds" | "second" => Duration::seconds(value as i64),
+        "minutes" | "minute" => Duration::seconds((value * 60.0) as i64),
+        "hours" | "hour" => Duration::seconds((value * 60.0 * 60.0) as i64),
+        "days" | "day" => Duration::seconds((value * 60.0 * 60.0 * 24.0) as i64),
+        other => return Err(anyhow::anyhow!("Unsupported unit: {other}")),
+    };
+
+    let datetime = origin + offset;
 
     // println!("Parsed {days} to {datetime}");
 
     Ok(datetime)
 }
 
-/// Formats durations to human readable formats, e.g. 4h 33m 2s
+/// Formats durations in seconds to human readable formats, e.g. 4h 33m 2s
 pub fn readable_dur(duration: std::time::Duration) -> String {
     let total_secs = duration.as_secs_f32();
 
@@ -144,10 +167,31 @@ pub fn readable_dur(duration: std::time::Duration) -> String {
 /// - variable 'time' is not found
 /// - attribute 'units' is not found
 /// - attribute value is not represented as a Str in netcdf crate (see AttributeValue enum Str field)
-pub fn fast_time_unit(ref_file: path::PathBuf) -> anyhow::Result<String> {
+pub fn fast_time_unit(ref_file: &path::PathBuf) -> anyhow::Result<String> {
     let file = netcdf::open(ref_file)?;
 
     let attr_val = file
+        .variable("time")
+        .ok_or(anyhow::anyhow!("Could not get time variable"))?
+        .attribute("units")
+        .ok_or(anyhow::anyhow!("Time variable does not have a units attribute"))?
+        .value()?;
+
+    if let AttributeValue::Str(value) = attr_val {
+        return Ok(value);
+    }
+
+    Err(anyhow::anyhow!("Attribute value is not represented as AttributeValue::Str"))
+}
+
+/// This function mirrors fast_time_unit, but takes an already opened netcdf file as input.
+/// ## Errors
+/// - netcdf::open returns any error (e.g. IO)
+/// - variable 'time' is not found
+/// - attribute 'units' is not found
+/// - attribute value is not represented as a Str in netcdf crate (see AttributeValue enum Str field)
+pub fn fast_time_unit_opened(netcdf_file: &netcdf::File) -> anyhow::Result<String> {
+    let attr_val = netcdf_file
         .variable("time")
         .ok_or(anyhow::anyhow!("Could not get time variable"))?
         .attribute("units")

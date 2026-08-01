@@ -2,7 +2,7 @@ use thiserror;
 
 use crate::hostrada_pixel::HostradaGridPixel;
 
-/// Error that should be used if anything requested is out of the hostrada grid span
+/// Errors for the hostrada dataset struct
 #[derive(Debug, thiserror::Error)]
 pub enum HostradaError {
     #[error("Coordinates {lat}, {lon} are out of hostrada grid bounds: {dist:.2}m to nearest pixel ({}, {}) at {:.4}, {:.4}", nearest_pixel.x, nearest_pixel.y, nearest_pixel.lat, nearest_pixel.lon)]
@@ -29,9 +29,15 @@ pub enum HostradaError {
         attr: String,
     },
 
-    #[error("Error parsing{context}: {e}")]
+    #[error("Error parsing {context}: {e}")]
     ParseError {
         context: String,
-        e: chrono::ParseError,
-    }
+        e: String,
+    },
+
+    // Use this to pass errors
+    #[error("HOSTRADA error: {e}")]
+    Generic {
+        e: String,
+    },
 }

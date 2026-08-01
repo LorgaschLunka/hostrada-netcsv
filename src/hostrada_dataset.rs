@@ -8,7 +8,7 @@ use num_traits::{Float, FromPrimitive};
 use netcdf::AttributeValue;
 
 use crate::{
-    config::Config, dates_and_times::parse_time, error::HostradaError, hostrada_pixel::HostradaGridPixel, hostrada_variable::HostradaVar, misc::{WithDistance, haversine},
+    dates_and_times::{fast_time_unit_opened, parse_time}, error::HostradaError, hostrada_pixel::HostradaGridPixel, hostrada_variable::HostradaVar, misc::{WithDistance, haversine},
 };
 
 
@@ -143,7 +143,28 @@ impl HostradaDataset {
         }
     }
 
-    /// Return the earliest date in the dataset and its corresponding days since origin.
+    /// Get the attribute 'unit' of the variable 'time'.
+    /// ## Errors
+    /// - Neither of those is found
+    /// - The value has an unsupported type
+    /// - Any netcdf error occured while trying to get the value
+    /// - The value is not of type AttributeValue::Str in the AttributeValue enum
+    pub fn time_unit(&self) -> Result<String, HostradaError> {
+        let attr_val = self.file()
+            .variable("time")
+            .ok_or(HostradaError::VarNotFound { var: "time".to_string() })?
+            .attribute("units")
+            .ok_or(HostradaError::AttrNotFound { attr: "units".to_string() })?
+            .value()?;
+
+        if let AttributeValue::Str(value) = attr_val {
+            return Ok(value)
+        }
+
+        Err(HostradaError::AttrNotFound { attr: "[Value not of type AttributeValue::Str. Inform developer if this happens".to_string() })
+    }
+
+    /// Return the earliest date in the dataset and its corresponding time value (depending on unit, most likely days since origin)
     /// ## Panics
     /// Panics if partial_cmp returns None, which only happens if the time_map is empty which should absolutely not happen.
     pub fn start_date(&self) -> Option<(&DateTime<Utc>, &f64)> {
@@ -153,7 +174,7 @@ impl HostradaDataset {
             .min_by(|(_, a), (_, b)| a.partial_cmp(b).expect("Couldn't sort dates."))
     }
 
-    /// Return the latest date in the dataset and its corresponding days since origin.
+    /// Return the latest date in the dataset and its corresponding time value (depending on unit, most likely days since origin)
     /// ## Panics
     /// Panics if partial_cmp returns None, which only happens if the time_map is empty which should absolutely not happen.
     pub fn end_date(&self) -> Option<(&DateTime<Utc>, &f64)> {
@@ -389,45 +410,26 @@ impl HostradaDataset {
         Ok(len - 1) // - 1 because it starts at 0)
     }
 
-    pub fn origin(&self) -> Result<String, HostradaError> {
-        let attr_val = self
-            .file()
-            .variable("time").ok_or(HostradaError::VarNotFound { var: "time".to_string() })?
-            .attribute("units").ok_or(HostradaError::AttrNotFound { attr: "units".to_string() })?
-            .value()?;
-
-        if let AttributeValue::Str(value) = attr_val {
-            return Ok(value.split_whitespace().last().unwrap().to_owned());
-        }
-        
-        Err(HostradaError::AttrNotFound { attr: "ANY ATTRIBUTE TYPE".to_string() })
-
-    }
 }
 
 /// Calculates a hashmap mapping a chrono::Datetime<Utc> to the respective timestamp in the dataset
 fn calculate_time_map(file: &netcdf::File) -> Result<HashMap<DateTime<Utc>, f64>, HostradaError> {
-    let config: Config = match Config::load() {
-        Ok(conf) => conf,
-        Err(e) => {
-            eprintln!("Couldn't build internal time hashmap due to config_err: {e}");
-            std::process::exit(1);
-        },
-    };
     let time_vals = file
         .variable("time")
         .ok_or(HostradaError::VarNotFound { var: "time".to_string() })?
         .get::<f64,_>(..)?;
 
+    let time_unit = fast_time_unit_opened(file).map_err(|e| HostradaError::Generic { e: format!("{e}") })?;
+
     let parsed= time_vals
         .into_iter()
         .map(|val| {
-            parse_time(&config.origin, val)
+            parse_time(&time_unit, val)
                 .map(|time| (time, val))
     })
     .collect::<Result<HashMap<_, _>, _>>();
 
-    return parsed.map_err(|e| HostradaError::ParseError { context: " all the values for the time grid".to_string(), e })
+    return parsed.map_err(|e| HostradaError::ParseError { context: "all the values for the time grid".to_string(), e: format!("{}", e) })
 }
 
 
