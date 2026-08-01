@@ -2,7 +2,7 @@
 
 # hostrada-netcsv
 
-A command-line utility for downloading and converting **HOSTRADA NetCDF** datasets from the German Weather Service (DWD) into CSV files (see https://opendata.dwd.de/climate_environment/CDC/grids_germany/hourly/hostrada/). Currently only for linux.
+A command-line utility for downloading and converting **[HOSTRADA NetCDF](https://opendata.dwd.de/climate_environment/CDC/grids_germany/hourly/hostrada/)** datasets from the German Weather Service (DWD) into CSV files. Currently only for linux.
 
 ## Features
 
@@ -129,7 +129,7 @@ hostrada-netcsv download air-temperature-mean 2023-01 2023-06 ./data
 ```
 This would download 5 months (January, February, March, April, May).
 
-Downloads data directly from the official DWD Open Data archive: https://opendata.dwd.de/climate_environment/CDC/grids_germany/hourly/hostrada/.
+Downloads data directly from the [official DWD Open Data archive](https://opendata.dwd.de/climate_environment/CDC/grids_germany/hourly/hostrada/).
 
 Supported variables include:
 
