@@ -5,9 +5,6 @@ use serde::Deserialize;
 use dirs;
 
 const DEFAULT_CONFIG: &str = r##"
-# days since origin is the time unit of hostrada data. As of now, the origin in hostrada netcdf files is 1949-12-01
-# check with hostrada-netcsv origin
-origin = "1949-12-01T00:00:00+00:00"
 # the base link for the hourly data
 base_link = "https://opendata.dwd.de/climate_environment/CDC/grids_germany/hourly/hostrada/"
 "##;
@@ -16,7 +13,6 @@ const DEFAULT_CONFIG_DIR_NAME: &str = "hostrada-netcsv";
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
-    pub origin: String,
     pub base_link: String,
 }
 
@@ -37,10 +33,7 @@ impl Config {
             println!("No config file found.\nCreating default configuration file {}", &file_path.display());
             fs::write(&file_path, DEFAULT_CONFIG)?;
         } else {
-            // if file exists: check if config options are correct (no check for correct link is implemented here, only origin)
-            let temp = Self::load()?;
-            let _ = chrono::DateTime::parse_from_rfc3339(&temp.origin)
-                .with_context(|| format!("Invalid config: {} is not valid rfc3330", temp.origin))?;
+            // if file exists, here i could check if config options are correct   
         }
 
         Ok(())

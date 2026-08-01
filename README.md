@@ -142,8 +142,6 @@ Supported variables include:
 * radiation-downwelling
 * wind-direction
 * wind-speed
-
-WORK IN PROGRESS, CURRENTLY PRODUCE UNPREDICTABLE DATA:
 * urban-heat-island-intensity
 * humidity-mixing-ratio
 
@@ -153,7 +151,6 @@ WORK IN PROGRESS, CURRENTLY PRODUCE UNPREDICTABLE DATA:
 
 There is a config file in $HOME/.config/hostrada-netcsv. The only reason to change the file currently is if any of the following changes:
 1. The base link of the HOSTRADA data (unlikely).
-2. The origin of the timestamp of the data (timestamps are included with unit "days-since <ORIGIN>"; if the origin did change, the timestamps in the resulting CSV files would be offset).
    
 ---
 
